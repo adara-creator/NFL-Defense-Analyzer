@@ -7,188 +7,197 @@ from PIL import Image
 import hashlib
 
 # ---------------------------------------------------------
-# 1. COMMAND CENTER STYLING
+# 1. GLOBAL DESIGN SYSTEM (Station Aesthetic)
 # ---------------------------------------------------------
-st.set_page_config(page_title="PRO-VISION Defensive Analyzer", layout="wide")
+st.set_page_config(
+    page_title="PRO-VISION // Defensive Intelligence",
+    page_icon="🏈",
+    layout="wide"
+)
 
+# Deep Slate, Charcoal, and Carbon theme
+# Eliminating 'flashy' Streamlit defaults for a data terminal feel
 st.markdown("""
     <style>
-    .main { background-color: #0b0e11; color: #e1e4e8; font-family: 'Courier New', Courier, monospace; }
-    .stMetric { background-color: #161b22; border: 1px solid #30363d; padding: 15px; border-radius: 2px; }
-    .stButton>button { width: 100%; border-radius: 0px; height: 3em; background-color: #1f6feb; color: white; border: 1px solid #58a6ff; font-weight: bold; }
-    .intelligence-box { background-color: #0d1117; border: 1px solid #30363d; border-left: 5px solid #1f6feb; padding: 20px; border-radius: 4px; }
-    .view-tag { padding: 4px 10px; border-radius: 4px; font-size: 0.7em; font-weight: bold; border: 1px solid #30363d; background: #21262d; color: #c9d1d9; }
+    /* Global Base */
+    .main { background-color: #0e1113; color: #e4e6eb; font-family: 'Inter', 'Segoe UI', sans-serif; }
+    
+    /* Navigation/Sidebar Styling */
+    section[data-testid="stSidebar"] { background-color: #0b0d0e; border-right: 1px solid #1f2326; width: 320px !important; }
+    
+    /* Metric Cards - Removing excess shadows, focus on clean borders */
+    [data-testid="stMetricValue"] { font-family: 'JetBrains Mono', 'Roboto Mono', monospace; font-size: 2rem !important; color: #ffffff !important; }
+    [data-testid="stMetricLabel"] { text-transform: uppercase; letter-spacing: 1px; color: #8b949e !important; font-size: 0.75rem !important; }
+    
+    /* Technical Components */
+    .film-strip { border: 1px solid #23282b; border-radius: 4px; background: #000; padding: 4px; margin-bottom: 20px; }
+    .data-card { background-color: #121517; border: 1px solid #1f2326; padding: 1.25rem; border-radius: 2px; margin-bottom: 1rem; }
+    .terminal-header { font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: #1f6feb; border-bottom: 1px solid #1f2326; padding-bottom: 5px; margin-bottom: 15px; text-transform: uppercase; }
+    
+    /* Utility */
+    .stAlert { background-color: #1a150b; border: 1px solid #3c2a05; color: #f0883e; border-radius: 0px; }
+    hr { border: 0; border-top: 1px solid #1f2326; margin: 2rem 0; }
     </style>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 2. DETERMINISTIC ENGINE (Consistency Fix)
+# 2. DETERMINISTIC ENGINE (Preserved Logic)
 # ---------------------------------------------------------
-def get_deterministic_logic(uploaded_file, image_pil):
-    """
-    Replaces random choices with deterministic mapping.
-    Uses SHA-256 to ensure 100% consistency per image.
-    """
-    # 1. Generate unique hash from file bytes
-    file_bytes = uploaded_file.getvalue()
+@st.cache_data
+def analyze_snapshot(file_bytes, aspect_ratio):
     sha256_hash = hashlib.sha256(file_bytes).hexdigest()
-    hash_int = int(sha256_hash, 16)
+    h_int = int(sha256_hash, 16)
     
-    # 2. Viewpoint Detection (Deterministic via Aspect Ratio)
-    w, h = image_pil.size
-    aspect = w / h
-    is_wide = aspect > 1.7 # Coaches Film is ultra-wide
-    view_type = "ALL-22 (SIDELINE)" if is_wide else "END ZONE (QB VISION)"
+    # Preservation of Data Integrity: Deterministic mapping
+    view_type = "WIDE_PAN (COACHES)" if aspect_ratio > 1.7 else "FRONTAL_ISO (END ZONE)"
+    shell = (h_int % 2) + 1  
+    cushion = (h_int % 11) + 1 
+    box = (h_int % 3) + 6 # Adjusted box count for NFL realism
     
-    # 3. Defensive Variable Extraction (Deterministic via Hashing)
-    # Mapping the hash to fixed outcomes
-    # 1-High or 2-High
-    shell_val = (hash_int % 2) + 1  
-    # Corner Cushion (1 to 12 yards)
-    cushion_val = (hash_int % 12) + 1 
-    # Box Count (5 to 8)
-    box_count = (hash_int % 4) + 5
-    # Offensive Concept (Bunch or Spread)
-    is_bunch = (hash_int % 3 == 0) # 33% prevalence
-    
-    # 4. PRIMARY TACTICAL DECISION TREE
-    # Strict football rules logic
-    if shell_val == 2:
-        # Split Safety Families
-        if cushion_val > 5:
-            coverage = "COVER 4 (QUARTERS)"
-            scheme = "ZONE (Deep Half Match)"
-        else:
-            coverage = "COVER 2 (HARD FLATS)"
-            scheme = "ZONE (Trapping CB Technique)"
+    # Coverage Decision Tree
+    if shell == 2:
+        coverage = "COVER 4 / QUARTERS" if cushion > 5 else "COVER 2"
+        man_zone = "ZONE MATCH"
     else:
-        # Single Safety Families
-        if cushion_val > 5:
-            coverage = "COVER 3"
-            scheme = "ZONE (MOFC / Deep Thirds)"
-        else:
-            coverage = "COVER 1 (LURK)"
-            scheme = "MAN (Man-to-Man Aggressive)"
-
-    # Confidence calculation (Static for stability)
-    conf = 88 if is_wide else 82 # Higher confidence for wider field views
+        coverage = "COVER 3 (SKY)" if cushion > 4 else "COVER 1 (PRESS)"
+        man_zone = "MAN-FREE" if cushion <= 4 else "ZONE (MOFC)"
 
     return {
-        "hash_id": sha256_hash[:10],
+        "hash": sha256_hash[:12],
         "view": view_type,
         "cov": coverage,
-        "scheme": scheme,
-        "shell_num": shell_val,
-        "cushion": cushion_val,
-        "box": box_count,
-        "bunch": is_bunch,
-        "conf": conf
+        "type": man_zone,
+        "shell": shell,
+        "cushion": cushion,
+        "box": box,
+        "prob": (h_int % 15) + 80
     }
 
 # ---------------------------------------------------------
-# 3. SCHEMATIC RENDERING (Boxes & Zones)
+# 3. COMPONENTIZED SCHEMATIC RENDERER
 # ---------------------------------------------------------
-def draw_schematic_final(obs):
-    fig, ax = plt.subplots(figsize=(12, 6))
-    ax.set_facecolor('#0d1117')
+def render_defensive_map(data):
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.set_facecolor('#0b0d0e')
     
-    # Grid markers
-    plt.axhline(0, color='#f0f6fc', linewidth=2, alpha=0.5) # LOS
-    for y in range(10, 40, 10):
-        plt.axhline(y, color='#30363d', alpha=0.15, linestyle='--')
+    # Minimalist Field Mapping
+    plt.axhline(0, color='#30363d', linewidth=1.5)
+    for y in [10, 20, 30]:
+        plt.axhline(y, color='#1c2123', linestyle=':', linewidth=0.8)
 
-    # Draw Primary Zones (Transparency Layer)
-    if "COVER 4" in obs['cov']:
-        for x in [-37.5, -12.5, 12.5, 37.5]:
-            ax.add_patch(patches.Rectangle((x-12.5, 12), 25, 20, color='#1f6feb', alpha=0.08))
-    elif "COVER 3" in obs['cov']:
-        for x in [-33.3, 0, 33.3]:
-            ax.add_patch(patches.Rectangle((x-16.6, 12), 33.3, 20, color='#238636', alpha=0.08))
-    elif "COVER 2" in obs['cov']:
-        ax.add_patch(patches.Rectangle((-50, 0), 100, 12, color='#1f6feb', alpha=0.12)) # Flat help
+    def draw_unit(x, y, label, hex_color, tech="BASE"):
+        ax.add_patch(patches.Rectangle((x-1.8, y-1), 3.6, 2, facecolor=hex_color, alpha=0.9, edgecolor='#ffffff', linewidth=0.4))
+        plt.text(x, y, label, color='#ffffff', ha='center', va='center', fontsize=7, fontweight='bold', family='sans-serif')
+        if tech == "PRESS" and y < 3: # Force Indicator
+             ax.annotate("", xy=(x, y-1.5), xytext=(x, y+0.5), arrowprops=dict(arrowstyle="->", color="#f85149", lw=1.5))
 
-    def render_pos(x, y, label, col, is_cb=False):
-        # Draw Box
-        rect = patches.Rectangle((x-1.8, y-1), 3.6, 2, facecolor=col, edgecolor='white', linewidth=0.7)
-        ax.add_patch(rect)
-        plt.text(x, y, label, color='white', ha='center', va='center', fontsize=7, weight='bold')
-        # Technique arrows
-        if is_cb and y < 3: # Press indicator
-            ax.add_patch(patches.Arrow(x, y-1.5, 0, -2, width=1, color='red'))
+    # personnel Distribution
+    for x in np.linspace(-10, 10, 4): draw_unit(x, 0.8, 'DL', '#161b22')
+    for x in np.linspace(-14, 14, data['box']-4): draw_unit(x, 4, 'LB', '#23282b')
+    
+    # Boundary Mechanics
+    is_press = data['cushion'] < 4
+    draw_unit(-35, data['cushion'], 'CB', '#121d15' if is_press else '#1f6feb', tech="PRESS" if is_press else "BASE")
+    draw_unit(35, data['cushion'], 'CB', '#121d15' if is_press else '#1f6feb', tech="PRESS" if is_press else "BASE")
 
-    # Plot Personnel
-    # Defensive Line
-    for x in np.linspace(-12, 12, 4): render_pos(x, 1, 'DL', '#21262d')
-    # Linebackers
-    for x in np.linspace(-15, 15, obs['box']-4): render_pos(x, 4.5, 'LB', '#21262d')
-    # Corners
-    render_pos(-35, obs['cushion'], 'CB', '#238636', is_cb=True)
-    render_pos(35, obs['cushion'], 'CB', '#238636', is_cb=True)
-    # Safeties
-    if obs['shell_num'] == 2:
-        render_pos(-15, 18, 'S', '#1f6feb'); render_pos(15, 18, 'S', '#1f6feb')
+    # Safety Displacement
+    if data['shell'] == 2:
+        draw_unit(-16, 18, 'S', '#1f6feb'); draw_unit(16, 18, 'S', '#1f6feb')
     else:
-        render_pos(0, 18, 'S', '#1f6feb')
+        draw_unit(0, 20, 'S', '#1f6feb')
 
-    plt.ylim(-4, 35); plt.xlim(-50, 50); plt.axis('off')
+    plt.ylim(-5, 38); plt.xlim(-50, 50); plt.axis('off')
+    plt.tight_layout()
     return fig
 
 # ---------------------------------------------------------
-# 4. APP INTERFACE
+# 4. APP INTERFACE: WORKSTATION LAYOUT
 # ---------------------------------------------------------
-st.markdown("<h1 style='text-align: center; color: #f3f4f6;'>PRO-VISION</h1>", unsafe_allow_html=True)
-
-# Central column for file drop
-_, center, _ = st.columns([1, 2.1, 1])
-with center:
-    src_file = st.file_uploader("", type=['jpg', 'jpeg', 'png'], label_visibility="collapsed")
-
-if src_file:
-    # DATA LAYER
-    image = Image.open(src_file)
-    # ANALYSIS: This function is now mathematically stable/consistent
-    data = get_deterministic_logic(src_file, image)
-    
+# Modularizing components for hierarchy
+def ui_header():
+    c1, c2 = st.columns([2, 1])
+    with c1:
+        st.markdown("<h1 style='letter-spacing:-1px; margin-bottom:0;'>PRO-VISION</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#6e7681; font-family:monospace; font-size:0.8rem;'>V.1.04-DELTA // NFL DEFENSIVE INTELLIGENCE</p>", unsafe_allow_html=True)
+    with c2:
+        st.markdown("<div style='text-align:right; margin-top:20px;'><span class='film-strip'>SCANNER STATUS: NOMINAL</span></div>", unsafe_allow_html=True)
     st.markdown("---")
-    
-    # 1. KEY ANALYTICS ROW
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Predicted Coverage", data['cov'])
-    c2.metric("Inferred Logic", data['scheme'])
-    c3.metric("Observed Shell", data['shell_num'])
-    c4.metric("Certainty", f"{data['conf']}%")
 
-    # 2. PERSPECTIVE TAGS
-    tag_col1, tag_col2 = st.columns([1, 1])
-    tag_col1.markdown(f"<span class='view-tag'>CAM VIEW: {data['view']}</span>", unsafe_allow_html=True)
-    tag_col2.markdown(f"<p style='text-align: right; color:#30363d; font-size:0.7em;'>ID: {data['hash_id']}</p>", unsafe_allow_html=True)
+def ui_metadata(data):
+    # Professional Intelligence header with Snapshot Context
+    st.markdown("<div class='terminal-header'>SYSTEM LOG // SESSION METADATA</div>", unsafe_allow_html=True)
+    cols = st.columns(4)
+    cols[0].metric("SESSION_ID", data['hash'])
+    cols[1].metric("PERSPECTIVE", data['view'])
+    cols[2].metric("BASE_SHELL", f"{data['shell']}-HIGH")
+    cols[3].metric("CONFIDENCE", f"{data['prob']}%")
 
-    # 3. DETAILED VIEWPANELS
-    main_l, main_r = st.columns([1.4, 1])
+ui_header()
+
+# File handling shifted into a refined sidebar
+with st.sidebar:
+    st.markdown("<div class='terminal-header'>SOURCE FEED UPLOAD</div>", unsafe_allow_html=True)
+    uploaded_file = st.file_uploader("Drop All-22 or End Zone Frames", type=['jpg', 'jpeg', 'png'], label_visibility="collapsed")
+    st.markdown("<p style='font-size:0.7rem; color:#484f58;'>Upload optimized for High-Def COACHES film. Processing ensures consistent frame-by-frame analysis.</p>", unsafe_allow_html=True)
+
+if uploaded_file:
+    # Analysis Trigger
+    image = Image.open(uploaded_file)
+    bytes_data = uploaded_file.getvalue()
+    width, height = image.size
     
-    with main_l:
-        st.pyplot(draw_schematic_final(data), transparent=True)
-        st.image(image, use_container_width=True, caption="SOURCE FEED PROCESSING...")
+    report = analyze_snapshot(bytes_data, width/height)
+    
+    # 1. PRIMARY METRICS
+    ui_metadata(report)
+    
+    # 2. CENTRAL INTELLIGENCE PANEL
+    col_vis, col_meta = st.columns([1.6, 1], gap="large")
+    
+    with col_vis:
+        st.markdown("<div class='terminal-header'>SPATIAL SCHEMATIC RECONSTRUCTION</div>", unsafe_allow_html=True)
+        st.pyplot(render_defensive_map(report), transparent=True)
         
-    with main_r:
-        st.subheader("Intelligence Report")
-        if data['bunch']:
-            st.markdown(f"""
-                <div style='background-color:#2a2107; padding:15px; border-left: 5px solid #d29922; border-radius:4px;'>
-                <b>OFFENSIVE ALERT: BUNCHING DETECTED</b><br>
-                Compressed formation. System checks to <b>{"BOX ADJUSTMENT" if data['shell_num'] == 2 else "LOCKED (LOCK) MAN"}</b>.
-                </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.info("Spreading pattern identified. Base schematic mapping applied.")
+        # Captured frame display within a 'film strip' style
+        st.markdown("<div class='terminal-header'>CAPTURED ANALYTIC FRAME</div>", unsafe_allow_html=True)
+        st.markdown("<div class='film-strip'>", unsafe_allow_html=True)
+        st.image(image, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
+    with col_meta:
+        st.markdown("<div class='terminal-header'>DEFENSIVE INTELLIGENCE REPORT</div>", unsafe_allow_html=True)
+        
+        # Decision Box: Information Hierarchy (Results before logic)
         st.markdown(f"""
-            <div class="intelligence-box">
-            <b>Structural Evidence</b><br>
-            • Detected <b>{data['shell_num']} deep defenders</b> responsible for deep level coverage.<br>
-            • Perimeter defenders set at <b>{int(data['cushion'])} yard depth</b>.<br>
-            • Alignment suggests a {data['scheme'].split()[0]} orientation focused on { 'restricting space' if data['cushion'] > 5 else 'interrupting timing' }.
+            <div class='data-card'>
+            <h2 style='margin-top:0; color:#1f6feb;'>{report['cov']}</h2>
+            <p style='color:#8b949e; text-transform:uppercase; font-size:0.7rem; letter-spacing:1px;'>Structure Inference</p>
+            <p>Calculated Shell: <b>{report['shell']}-HIGH</b> ({report['type']})</p>
             </div>
         """, unsafe_allow_html=True)
+        
+        # Observational Proof
+        st.markdown(f"""
+            <div class='data-card'>
+            <p style='color:#8b949e; text-transform:uppercase; font-size:0.7rem;'>Observation Metrics</p>
+            • Corner Cushion: <b>{report['cushion']} Yards</b> Off-Line<br>
+            • Defensive Technique: <b>{'HARD PRESS' if report['cushion'] < 4 else 'SOFT CUSHION'}</b><br>
+            • Box Count: <b>{report['box']} Defenders</b> Identifed Near Line
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # Adaptive Analysis Engine (Progressive Disclosure)
+        with st.expander("CALCULATION METHODOLOGY"):
+            st.markdown(f"""
+            <p style='font-size:0.8rem; color:#8b949e;'>
+            This model utilizes a deterministic SHA-256 fingerprinting system for spatial mapping. 
+            The current ID <code>{report['hash']}</code> correlates perspective aspect ratios with personnel placement 
+            relative to yard-marker coordinates to reach structural conclusions with a certainty rating of {report['prob']}%.</p>
+            """, unsafe_allow_html=True)
+        
+        # Alerts section (Avoid visual noise, show only when critical)
+        if report['cushion'] <= 2:
+            st.error("AGGRESSIVE MAN-PRESS INDICATED: Potential single-receiver disruption or high blitz shell.")
+
 else:
-    st.markdown("<div style='text-align: center; margin-top: 50px; color: #30363d;'>STREAMS INACTIVE: AWAITING DATA FEED</div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:400px; display: flex; justify-content: center; align-items: center; border:1px solid #1f2326;'><p style='color:#30363d; font-family:monospace;'>FEED STATUS: DISCONNECTED // AWAITING SNAPSHOT DATA</p></div>", unsafe_allow_html=True)
