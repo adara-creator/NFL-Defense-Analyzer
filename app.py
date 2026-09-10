@@ -8,140 +8,137 @@ import random
 import time
 
 # ---------------------------------------------------------
-# 1. STYLE & THEME (Dark Mode Scouting UI)
+# 1. UI CONFIGURATION (PRO-VISION COMMAND CENTER)
 # ---------------------------------------------------------
-st.set_page_config(page_title="Defensive Schematic Analyzer", layout="wide")
+st.set_page_config(page_title="PRO-VISION Defensive Analyzer", layout="wide")
 
 st.markdown("""
     <style>
-    .main { background-color: #0d1117; color: #c9d1d9; font-family: 'Segoe UI', Roboto, sans-serif; }
-    .stMetric { background-color: #161b22; border: 1px solid #30363d; padding: 15px; border-radius: 6px; }
-    .stButton>button { width: 100%; border-radius: 4px; height: 3.2em; background-color: #238636; color: white; border: none; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-    .report-card { background-color: #0d1117; border: 1px solid #30363d; padding: 20px; border-radius: 6px; margin-bottom: 15px; }
-    div[data-testid="stFileUploader"] { background-color: #161b22; border: 1px dashed #484f58; border-radius: 6px; }
-    .scout-header { color: #f0f6fc; border-left: 4px solid #1f6feb; padding-left: 15px; margin-bottom: 20px; font-weight: 600; }
+    .main { background-color: #0b0e11; color: #e1e4e8; font-family: 'Inter', sans-serif; }
+    .stMetric { background-color: #161b22; border: 1px solid #30363d; padding: 15px; border-radius: 4px; }
+    .stButton>button { width: 100%; border-radius: 2px; height: 3.5em; background-color: #1f6feb; color: white; border: none; font-weight: bold; letter-spacing: 1px; }
+    .status-bar { padding: 10px; border-radius: 4px; margin-bottom: 20px; font-weight: bold; font-size: 0.85em; text-align: center; border: 1px solid #30363d; }
+    .check-box { background-color: #1c2128; border: 1px solid #30363d; padding: 15px; border-left: 5px solid #f85149; margin-top: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 2. SCHEMATIC RENDERING (Box-Based Field Diagram)
+# 2. TACTICAL MAPPING (ZONES & PRESS)
 # ---------------------------------------------------------
-def draw_defensive_diagram(obs):
-    """Creates a professional field map using boxes for players."""
-    fig, ax = plt.subplots(figsize=(10, 5))
+def draw_schematic(obs):
+    fig, ax = plt.subplots(figsize=(10, 5.5))
     ax.set_facecolor('#0d1117')
     
-    # Grass lines (Line of Scrimmage at 0)
-    plt.axhline(0, color='#30363d', linewidth=2)
-    for y in range(5, 25, 5):
-        plt.axhline(y, color='#161b22', linewidth=1, alpha=0.5)
+    # Field Foundations
+    plt.axhline(0, color='white', linewidth=1.5, alpha=0.8) # LOS
+    for y in range(10, 30, 10):
+        plt.axhline(y, color='white', alpha=0.1, linestyle='--')
 
-    def draw_player(x, y, label, color):
-        rect = patches.Rectangle((x-1.5, y-0.75), 3, 1.5, linewidth=1, edgecolor='white', facecolor=color, alpha=0.9)
-        ax.add_patch(rect)
-        plt.text(x, y, label, color='white', ha='center', va='center', fontsize=8, weight='bold')
+    # Draw Zones (Transparent Overlays)
+    if obs['cov'] == "COVER 4 (QUARTERS)":
+        zones = [(-50, 10, 25, 20), (-25, 10, 25, 20), (0, 10, 25, 20), (25, 10, 25, 20)]
+        for z in zones:
+            ax.add_patch(patches.Rectangle((z[0], z[1]), z[2], z[3], color='#1f6feb', alpha=0.15))
+    elif obs['cov'] == "COVER 3":
+        zones = [(-50, 12, 33, 20), (-16, 12, 32, 20), (16, 12, 33, 20)]
+        for z in zones:
+            ax.add_patch(patches.Rectangle((z[0], z[1]), z[2], z[3], color='#238636', alpha=0.15))
 
-    # Draw Front (DL - Defensive Line) - Blue boxes
-    dl_x = np.linspace(-10, 10, 4)
-    for x in dl_x:
-        draw_player(x, 1, 'DL', '#1f6feb')
+    # Function to draw positions
+    def draw_pos(x, y, txt, col, press=False):
+        # Draw the box
+        ax.add_patch(patches.Rectangle((x-1.5, y-0.75), 3, 1.5, facecolor=col, edgecolor='white', linewidth=0.5))
+        plt.text(x, y, txt, color='white', ha='center', va='center', fontsize=7, weight='bold')
+        # If Press, draw contact indicator
+        if press:
+            ax.add_patch(patches.Arrow(x, y, 0, -2, width=1, color='red', alpha=0.6))
 
-    # Draw Second Level (LB - Linebackers) - Orange boxes
-    lb_count = obs['box_count'] - 4
-    if lb_count > 0:
-        lb_x = np.linspace(-15, 15, lb_count)
-        for x in lb_x:
-            draw_player(x, 4.5, 'LB', '#d29922')
+    # Defensive Line (DL)
+    for x in np.linspace(-12, 12, 4):
+        draw_pos(x, 1, 'DL', '#161b22')
+    
+    # Linebackers (LB)
+    for x in np.linspace(-15, 15, obs['lb_count']):
+        draw_pos(x, 4.5, 'LB', '#161b22')
 
-    # Draw Corners (CB) - Green boxes
-    cb_y = obs['cushion'] if obs['cushion'] > 0 else 1.5
-    draw_player(-35, cb_y, 'CB', '#238636')
-    draw_player(35, cb_y, 'CB', '#238636')
+    # Corners & Safeties
+    is_press = obs['cushion'] < 3
+    draw_pos(-35, obs['cushion'], 'CB', '#238636', press=is_press)
+    draw_pos(35, obs['cushion'], 'CB', '#238636', press=is_press)
 
-    # Draw Deep Level (S - Safeties) - Red boxes
-    if obs['shell_num'] == 2:
-        draw_player(-15, 16, 'S', '#da3633')
-        draw_player(15, 16, 'S', '#da3633')
-    elif obs['shell_num'] == 1:
-        draw_player(0, 16, 'S', '#da3633')
+    if obs['shell'] == "2-HIGH":
+        draw_pos(-15, 18, 'S', '#1f6feb')
+        draw_pos(15, 18, 'S', '#1f6feb')
+    else:
+        draw_pos(0, 18, 'S', '#1f6feb')
 
-    plt.ylim(-2, 22)
-    plt.xlim(-50, 50)
-    plt.axis('off')
+    plt.ylim(-3, 30); plt.xlim(-50, 50); plt.axis('off')
     return fig
 
 # ---------------------------------------------------------
-# 3. ANALYSIS LOGIC
+# 3. INTELLIGENCE ENGINE (BUNCH CONCEPTS)
 # ---------------------------------------------------------
-def analyze_snap(image):
-    # Simulated detections
-    s_count = random.choice([1, 2])
+def run_scout_analysis(img):
+    time.sleep(0.8)
+    shell_val = random.choice([1, 2])
     dist = random.randint(1, 10)
-    box = random.randint(6, 8)
+    # Simulate Bunch Detection (High prevalence in modern NFL)
+    bunch_detected = random.choice([True, False])
     
-    # Specific NFL rules logic
-    if s_count == 2:
-        pred = "COVER 4 (QUARTERS)" if dist > 5 else "COVER 2"
-        logic = "Dual deep half indicators detected."
-    else:
-        pred = "COVER 3" if dist > 5 else "COVER 1"
-        logic = "Single deep middle indicator (MOFC) detected."
-
+    cov_name = "COVER 4 (QUARTERS)" if shell_val == 2 and dist > 5 else "COVER 3" if shell_val == 1 else "MAN-PRESS"
+    
     return {
-        "pred": pred, "shell": f"{s_count}-HIGH", "shell_num": s_count,
-        "box_count": box, "cushion": dist, "logic": logic, "conf": random.randint(70, 92)
+        "shell": f"{shell_val}-HIGH",
+        "cov": cov_name,
+        "cushion": dist,
+        "lb_count": random.randint(2, 3),
+        "bunch": bunch_detected,
+        "conf": random.randint(82, 96)
     }
 
 # ---------------------------------------------------------
 # 4. APP INTERFACE
 # ---------------------------------------------------------
-# Clean, professional Header (no emoji)
-st.markdown("<h1 style='text-align: center; color: #f0f6fc; letter-spacing: 2px;'>DEFENSIVE SCHEMATIC ANALYZER</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #8b949e; font-size: 0.9em; margin-bottom: 40px;'>STRUCTURAL COVERAGE PREDICTION SYSTEM // NFL GRADE</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #58a6ff; letter-spacing: 3px;'>PRO-VISION</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #8b949e; margin-bottom: 30px;'>TACTICAL DEFENSIVE SCHEMATIC PLATFORM</p>", unsafe_allow_html=True)
 
-# Layout: 3 Columns with the Middle wide
-_, col_center, _ = st.columns([1, 3, 1])
+# Layout
+col_side, col_main = st.columns([1, 2.5])
 
-with col_center:
-    uploaded_file = st.file_uploader("", type=['jpg', 'jpeg', 'png'], label_visibility="collapsed")
-
-if uploaded_file is not None:
-    # RUN LOGIC
-    img = Image.open(uploaded_file)
-    results = analyze_snap(img)
+with col_side:
+    st.markdown("<div class='status-bar'>SYSTEM STATUS: ACTIVE</div>", unsafe_allow_html=True)
+    uploaded_file = st.file_uploader("SOURCE FEED", type=['jpg', 'png', 'jpeg'], label_visibility="collapsed")
     
-    st.markdown("---")
-    
-    # Intelligence Panel (Observed vs Inferred)
-    col1, col2 = st.columns([1, 1])
-    
-    with col1:
-        st.markdown("<div class='scout-header'>PRIMARY DETECTION RESULTS</div>", unsafe_allow_html=True)
-        m1, m2 = st.columns(2)
-        m1.metric("Safety Shell", results['shell'])
-        m2.metric("CB Alignment", f"{results['cushion']} YDS OFF")
+    if uploaded_file:
+        img_src = Image.open(uploaded_file)
+        analysis = run_scout_analysis(img_src)
         
-        m3, m4 = st.columns(2)
-        m3.metric("Primary Pred", results['pred'])
-        m4.metric("Model Conf", f"{results['conf']}%")
+        st.metric("Primary Structure", analysis['cov'])
+        st.metric("Confidence Level", f"{analysis['conf']}%")
+        st.write("---")
         
-        st.write("") # Spacer
-        st.image(img, use_container_width=True, caption="SOURCE FEED: PRE-SNAP IMAGE")
+        if analysis['bunch']:
+            st.markdown("""
+                <div class='check-box'>
+                <b>OFFENSIVE ALERT: BUNCH CONCEPT</b><br>
+                3 Receivers identified in close proximity (strong side).<br><br>
+                <b>DEFENSIVE CHECK: BOX/LOCK</b><br>
+                Model predicts the defense is checking to a 'Box' adjustment (4-on-3) to handle switch releases.
+                </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.info("Formation: Spread (Standard spacing detected).")
 
-    with col2:
-        st.markdown("<div class='scout-header'>SPATIAL SCHEMATIC</div>", unsafe_allow_html=True)
-        # Diagram
-        fig = draw_defensive_diagram(results)
+with col_main:
+    if uploaded_file:
+        # Display schematic diagram with zones
+        st.markdown("<div style='margin-left: 25px;'>", unsafe_allow_html=True)
+        fig = draw_schematic(analysis)
         st.pyplot(fig, transparent=True)
         
-        st.markdown("<div class='scout-header'>TECHNICAL REPORT</div>", unsafe_allow_html=True)
-        st.markdown(f"""
-            <div class='report-card'>
-            <b>ANALYSIS:</b> {results['logic']}<br><br>
-            <b>STRUCTURAL TYPE:</b> {'Zone Hybrid' if results['cushion'] > 4 else 'Aggressive/Press Man'}<br>
-            <b>OBSERVATION:</b> Front shows {results['box_count']} defenders near the line. 
-            Cushion depth suggests the {results['shell']} looks to minimize explosive deep passing attempts.
-            </div>
-        """, unsafe_allow_html=True)
-else:
-    st.markdown("<div style='text-align: center; padding: 50px; color: #484f58;'>WAITING FOR SOURCE DATA: PLEASE UPLOAD A PRE-SNAP IMAGE</div>", unsafe_allow_html=True)
+        # Display the real photo for reference
+        st.markdown("<b>LIVE IMAGE ANALYSIS:</b>", unsafe_allow_html=True)
+        st.image(img_src, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+    else:
+        st.markdown("<div style='height: 400px; display: flex; align-items: center; justify-content: center; border: 1px solid #30363d;'>LOAD SOURCE DATA FROM SIDEBAR</div>", unsafe_allow_html=True)
