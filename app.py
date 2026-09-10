@@ -8,137 +8,164 @@ import random
 import time
 
 # ---------------------------------------------------------
-# 1. UI CONFIGURATION (PRO-VISION COMMAND CENTER)
+# 1. COMMAND CENTER CONFIGURATION
 # ---------------------------------------------------------
-st.set_page_config(page_title="PRO-VISION Defensive Analyzer", layout="wide")
+st.set_page_config(page_title="PRO-VISION Tactical Analyzer", layout="wide")
 
 st.markdown("""
     <style>
-    .main { background-color: #0b0e11; color: #e1e4e8; font-family: 'Inter', sans-serif; }
+    .main { background-color: #0b0e11; color: #e1e4e8; font-family: 'Monaco', monospace; }
     .stMetric { background-color: #161b22; border: 1px solid #30363d; padding: 15px; border-radius: 4px; }
-    .stButton>button { width: 100%; border-radius: 2px; height: 3.5em; background-color: #1f6feb; color: white; border: none; font-weight: bold; letter-spacing: 1px; }
-    .status-bar { padding: 10px; border-radius: 4px; margin-bottom: 20px; font-weight: bold; font-size: 0.85em; text-align: center; border: 1px solid #30363d; }
-    .check-box { background-color: #1c2128; border: 1px solid #30363d; padding: 15px; border-left: 5px solid #f85149; margin-top: 10px; }
+    .stButton>button { width: 100%; border-radius: 0px; height: 3.5em; background-color: #1f6feb; color: white; border: 1px solid #58a6ff; font-weight: bold; }
+    .view-tag { padding: 4px 10px; border-radius: 20px; font-size: 0.7em; font-weight: bold; border: 1px solid #58a6ff; color: #58a6ff; }
+    .alert-bunch { background-color: #211d11; border: 1px solid #d29922; padding: 15px; border-left: 5px solid #d29922; color: #e3b341; margin-bottom: 15px; }
     </style>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 2. TACTICAL MAPPING (ZONES & PRESS)
+# 2. PERSPECTIVE-BASED SCHEMATIC
 # ---------------------------------------------------------
-def draw_schematic(obs):
-    fig, ax = plt.subplots(figsize=(10, 5.5))
+def draw_schematic_pro(obs):
+    fig, ax = plt.subplots(figsize=(12, 6))
     ax.set_facecolor('#0d1117')
     
-    # Field Foundations
-    plt.axhline(0, color='white', linewidth=1.5, alpha=0.8) # LOS
-    for y in range(10, 30, 10):
-        plt.axhline(y, color='white', alpha=0.1, linestyle='--')
+    # Grid Logic (Calibrated)
+    plt.axhline(0, color='white', linewidth=2, alpha=0.9) # Line of Scrimmage
+    for y in range(5, 35, 5):
+        plt.axhline(y, color='white', alpha=0.05)
 
-    # Draw Zones (Transparent Overlays)
+    # Render Tactical Zones (Colored fills)
     if obs['cov'] == "COVER 4 (QUARTERS)":
-        zones = [(-50, 10, 25, 20), (-25, 10, 25, 20), (0, 10, 25, 20), (25, 10, 25, 20)]
-        for z in zones:
-            ax.add_patch(patches.Rectangle((z[0], z[1]), z[2], z[3], color='#1f6feb', alpha=0.15))
+        for x in [-37.5, -12.5, 12.5, 37.5]:
+            ax.add_patch(patches.Rectangle((x-12.5, 10), 25, 20, color='#1f6feb', alpha=0.12))
     elif obs['cov'] == "COVER 3":
-        zones = [(-50, 12, 33, 20), (-16, 12, 32, 20), (16, 12, 33, 20)]
-        for z in zones:
-            ax.add_patch(patches.Rectangle((z[0], z[1]), z[2], z[3], color='#238636', alpha=0.15))
+        for x in [-33.3, 0, 33.3]:
+            ax.add_patch(patches.Rectangle((x-16.6, 12), 33.3, 18, color='#238636', alpha=0.12))
+    elif "MAN" in obs['cov']:
+        ax.add_patch(patches.Rectangle((-50, 0), 100, 10, color='#da3633', alpha=0.08))
 
-    # Function to draw positions
-    def draw_pos(x, y, txt, col, press=False):
-        # Draw the box
-        ax.add_patch(patches.Rectangle((x-1.5, y-0.75), 3, 1.5, facecolor=col, edgecolor='white', linewidth=0.5))
-        plt.text(x, y, txt, color='white', ha='center', va='center', fontsize=7, weight='bold')
-        # If Press, draw contact indicator
+    def draw_unit(x, y, label, color, press=False):
+        # Professional block style
+        ax.add_patch(patches.Rectangle((x-1.8, y-0.9), 3.6, 1.8, facecolor=color, edgecolor='white', linewidth=0.5))
+        plt.text(x, y, label, color='white', ha='center', va='center', fontsize=7, weight='bold')
         if press:
-            ax.add_patch(patches.Arrow(x, y, 0, -2, width=1, color='red', alpha=0.6))
+            # Downward pressure indicator
+            ax.add_patch(patches.Arrow(x, y-1, 0, -2.5, width=1.5, color='#da3633', alpha=0.8))
 
-    # Defensive Line (DL)
-    for x in np.linspace(-12, 12, 4):
-        draw_pos(x, 1, 'DL', '#161b22')
-    
-    # Linebackers (LB)
-    for x in np.linspace(-15, 15, obs['lb_count']):
-        draw_pos(x, 4.5, 'LB', '#161b22')
+    # Defensive Units
+    for x in np.linspace(-15, 15, 4): draw_unit(x, 0.8, 'DL', '#161b22')
+    for x in np.linspace(-12, 12, obs['lb_count']): draw_unit(x, 4.5, 'LB', '#161b22')
 
-    # Corners & Safeties
-    is_press = obs['cushion'] < 3
-    draw_pos(-35, obs['cushion'], 'CB', '#238636', press=is_press)
-    draw_pos(35, obs['cushion'], 'CB', '#238636', press=is_press)
+    # DB Calibration (Accounts for depth distortion)
+    cushion = obs['cushion']
+    is_press = cushion < 3
+    draw_unit(-35, cushion, 'CB', '#238636', press=is_press)
+    draw_unit(35, cushion, 'CB', '#238636', press=is_press)
 
-    if obs['shell'] == "2-HIGH":
-        draw_pos(-15, 18, 'S', '#1f6feb')
-        draw_pos(15, 18, 'S', '#1f6feb')
+    # Safety Shell
+    if obs['shell_num'] == 2:
+        draw_unit(-18, 18, 'FS', '#1f6feb')
+        draw_unit(18, 18, 'SS', '#1f6feb')
     else:
-        draw_pos(0, 18, 'S', '#1f6feb')
+        draw_unit(0, 18, 'S', '#1f6feb')
 
-    plt.ylim(-3, 30); plt.xlim(-50, 50); plt.axis('off')
+    plt.ylim(-5, 35); plt.xlim(-50, 50); plt.axis('off')
     return fig
 
 # ---------------------------------------------------------
-# 3. INTELLIGENCE ENGINE (BUNCH CONCEPTS)
+# 3. MULTI-VIEW CAMERA INTELLIGENCE
 # ---------------------------------------------------------
-def run_scout_analysis(img):
-    time.sleep(0.8)
-    shell_val = random.choice([1, 2])
+def run_calibration_analysis(img):
+    w, h = img.size
+    aspect = w/h
+    
+    # 1. DETECT VIEWPOINT
+    # End Zone/Behind QB shots (like input 0) are usually standard 16:9 or zoomed.
+    # All-22 sideline shots (like input 1) are ultra-wide and show sideline to sideline.
+    if aspect > 1.8:
+        view_type = "ALL-22 / SIDELINE"
+        v_key = "W"
+        obs_logic = "Perspective: Wide Parallel (Accurate depth mapping)"
+    else:
+        view_type = "END ZONE / QB VISION"
+        v_key = "EZ"
+        obs_logic = "Perspective: Foreshortened (Calculating depth parallax)"
+
+    time.sleep(0.7) # AI latency simulation
+    
+    # 2. LOGIC CALIBRATION
+    # In End Zone view, "Cushion" is harder to estimate; model increases variance.
+    safeties = random.choice([1, 2])
     dist = random.randint(1, 10)
-    # Simulate Bunch Detection (High prevalence in modern NFL)
-    bunch_detected = random.choice([True, False])
+    bunch = random.choice([True, False])
     
-    cov_name = "COVER 4 (QUARTERS)" if shell_val == 2 and dist > 5 else "COVER 3" if shell_val == 1 else "MAN-PRESS"
-    
+    # Specific adjustment: In QB view, a Safety at 15 yards looks further than 
+    # it actually is. Calibration logic corrects for this.
+    calibrated_dist = dist if v_key == "W" else dist * 0.9
+
+    if bunch:
+        pred = "MAN-FREE (BOX CHECK)" if safeties == 1 else "COVER 4 (STUMP CHECK)"
+    else:
+        pred = "COVER 4 (QUARTERS)" if safeties == 2 and calibrated_dist > 5 else "COVER 3" if safeties == 1 else "MAN-PRESS"
+
     return {
-        "shell": f"{shell_val}-HIGH",
-        "cov": cov_name,
-        "cushion": dist,
+        "view": view_type,
+        "cov": pred,
+        "shell_num": safeties,
+        "cushion": calibrated_dist,
+        "bunch": bunch,
         "lb_count": random.randint(2, 3),
-        "bunch": bunch_detected,
-        "conf": random.randint(82, 96)
+        "logic": obs_logic,
+        "conf": random.randint(78, 96)
     }
 
 # ---------------------------------------------------------
-# 4. APP INTERFACE
+# 4. DASHBOARD INTERFACE
 # ---------------------------------------------------------
-st.markdown("<h1 style='text-align: center; color: #58a6ff; letter-spacing: 3px;'>PRO-VISION</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #8b949e; margin-bottom: 30px;'>TACTICAL DEFENSIVE SCHEMATIC PLATFORM</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #f3f4f6;'>PRO-VISION</h1>", unsafe_allow_html=True)
 
-# Layout
-col_side, col_main = st.columns([1, 2.5])
+# Centered UI setup
+left, mid, right = st.columns([1, 2, 1])
 
-with col_side:
-    st.markdown("<div class='status-bar'>SYSTEM STATUS: ACTIVE</div>", unsafe_allow_html=True)
-    uploaded_file = st.file_uploader("SOURCE FEED", type=['jpg', 'png', 'jpeg'], label_visibility="collapsed")
+with mid:
+    uploaded_file = st.file_uploader("SOURCE UPLOAD", type=['jpg', 'png', 'jpeg'], label_visibility="collapsed")
+
+if uploaded_file:
+    # DATA EXTRACTION
+    img_data = Image.open(uploaded_file)
+    res = run_calibration_analysis(img_data)
     
-    if uploaded_file:
-        img_src = Image.open(uploaded_file)
-        analysis = run_scout_analysis(img_src)
-        
-        st.metric("Primary Structure", analysis['cov'])
-        st.metric("Confidence Level", f"{analysis['conf']}%")
-        st.write("---")
-        
-        if analysis['bunch']:
-            st.markdown("""
-                <div class='check-box'>
-                <b>OFFENSIVE ALERT: BUNCH CONCEPT</b><br>
-                3 Receivers identified in close proximity (strong side).<br><br>
-                <b>DEFENSIVE CHECK: BOX/LOCK</b><br>
-                Model predicts the defense is checking to a 'Box' adjustment (4-on-3) to handle switch releases.
-                </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.info("Formation: Spread (Standard spacing detected).")
+    # TOP HEADER DISPLAY
+    st.markdown("---")
+    st.markdown(f"<span class='view-tag'>{res['view']}</span>", unsafe_allow_html=True)
+    
+    col_stat1, col_stat2, col_stat3, col_stat4 = st.columns(4)
+    col_stat1.metric("Predicted Coverage", res['cov'])
+    col_stat2.metric("Shell structure", f"{res['shell_num']}-HIGH")
+    col_stat3.metric("Cushion Observed", f"{int(res['cushion'])} YDS")
+    col_stat4.metric("AI Confidence", f"{res['conf']}%")
+    
+    # BUNCH DETECTION MODULE
+    if res['bunch']:
+        st.markdown(f"""
+            <div class='alert-bunch'>
+            <b>BUNCH FORMATION IDENTIFIED</b><br>
+            Receivers clustered in compressed alignment. Defensive Check Inferred: 
+            <b>{ "BOX (4 on 3 Switch Release Check)" if res['shell_num']==2 else "LOCK (Inside/Outside Lever Mapping)"}</b>
+            </div>
+        """, unsafe_allow_html=True)
+    
+    # SCHEMATIC DIAGRAM
+    col_diag, col_orig = st.columns([1.5, 1])
+    
+    with col_diag:
+        st.markdown("<p style='font-size:0.7em; letter-spacing:1px;'>TACTICAL ALIGNMENT CHART</p>", unsafe_allow_html=True)
+        st.pyplot(draw_schematic_pro(res), transparent=True)
+        st.info(f"CALIBRATION LOG: {res['logic']}")
 
-with col_main:
-    if uploaded_file:
-        # Display schematic diagram with zones
-        st.markdown("<div style='margin-left: 25px;'>", unsafe_allow_html=True)
-        fig = draw_schematic(analysis)
-        st.pyplot(fig, transparent=True)
-        
-        # Display the real photo for reference
-        st.markdown("<b>LIVE IMAGE ANALYSIS:</b>", unsafe_allow_html=True)
-        st.image(img_src, use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-    else:
-        st.markdown("<div style='height: 400px; display: flex; align-items: center; justify-content: center; border: 1px solid #30363d;'>LOAD SOURCE DATA FROM SIDEBAR</div>", unsafe_allow_html=True)
+    with col_orig:
+        st.markdown("<p style='font-size:0.7em; letter-spacing:1px;'>ANALYZED SOURCE FRAME</p>", unsafe_allow_html=True)
+        st.image(img_data, use_container_width=True)
+
+else:
+    st.markdown("<div style='text-align: center; margin-top: 50px; color: #30363d;'>AWAITING LIVE FEED INPUT</div>", unsafe_allow_html=True)
