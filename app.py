@@ -2,13 +2,14 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from matplotlib.path import Path
 import numpy as np
 from PIL import Image
 import hashlib
 import streamlit.components.v1 as components
 
 # ---------------------------------------------------------
-# 1. CORE ARCHITECTURE
+# 1. CORE ENGINE & RESET
 # ---------------------------------------------------------
 if 'uploader_key' not in st.session_state:
     st.session_state.uploader_key = 0
@@ -30,7 +31,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 2. DYNAMIC TERMINALS
+# 2. PRO-UI TERMINALS
 # ---------------------------------------------------------
 def render_header_white():
     st.markdown("<h1 style='text-align: center; letter-spacing: 7px; color: #ffffff; font-family: Courier; margin-top: -35px;'>PRO-VISION</h1>", unsafe_allow_html=True)
@@ -55,10 +56,10 @@ def render_flap_ui(label, text):
     components.html(html, height=80)
 
 # ---------------------------------------------------------
-# 3. FIELD RENDERING (BUBBLE ZONES & PERSPECTIVE)
+# 3. ADVANCED PLAYBOOK ENGINE (FULL ROUTES)
 # ---------------------------------------------------------
 def draw_tactical_schematic(data, offense_on, defense_on):
-    fig, ax = plt.subplots(figsize=(12, 7))
+    fig, ax = plt.subplots(figsize=(12, 8))
     ax.set_facecolor('#0b0d0e')
     is_ez = "EZ" in data['view']
     
@@ -67,119 +68,128 @@ def draw_tactical_schematic(data, offense_on, defense_on):
         scale = 1 - (y * 0.016)
         return x * scale, y
 
-    # Field Foundations
+    # Field Layout
     for y in range(0, 50, 10):
         p1, p2 = p_warp(-65, y), p_warp(65, y)
         plt.plot([p1[0], p2[0]], [p1[1], p2[1]], color='#1f2937', lw=1, alpha=0.3)
 
-    # 1. PERSONNEL RENDERING HELPER
+    # 1. PERSONNEL RENDER
     def draw_unit(x, y, txt, col, border='#ffffff', tech_xy=None):
         tx, ty = p_warp(x, y)
         sc = (1-(y*0.015)) if is_ez else 1
         w, h = 3.6 * sc, 1.8 * sc
         
-        # ZONE BUBBLE LOGIC (The Red Ovals from your image)
+        # Red Bubble Zone (The Requested 4-3 Overlay)
         if defense_on and tech_xy:
             zx, zy = p_warp(tech_xy[0], tech_xy[1])
-            # Determine bubble size based on role
-            bw = 40 if y > 15 else 20
-            bh = 15 if y > 15 else 12
-            # Add Ellipse Zone
-            ax.add_patch(patches.Ellipse((zx, zy), bw * sc, bh * sc, color='#ef4444', alpha=0.15, ec='#ef4444', lw=1))
-            # Connecting link from player to bubble
+            bw, bh = (40 if y > 15 else 22), (16 if y > 15 else 12)
+            ax.add_patch(patches.Ellipse((zx, zy), bw * sc, bh * sc, color='#ef4444', alpha=0.15, ec='#ef4444', lw=1, ls='--'))
             plt.plot([tx, zx], [ty, zy], color='#ef4444', alpha=0.3, ls=':', lw=1)
 
         ax.add_patch(patches.Rectangle((tx-w/2, ty-h/2), w, h, fc=col, ec=border, lw=0.6, zorder=10))
         plt.text(tx, ty, txt, color='white', ha='center', va='center', fontsize=6, fontweight='bold', zorder=11)
 
-    # 2. OFFENSE personnel
+    # 2. DEFENSE personnel
+    for x in np.linspace(-12, 12, 4): draw_unit(x, 1, 'DL', '#161b22')
+    for i, x in enumerate(np.linspace(-10, 10, 3)): draw_unit(x, 4.5, ['S', 'M', 'W'][i], '#161b22', tech_xy=(x*1.5, 8))
+    
+    c = data['cushion']
+    draw_unit(-42, c, 'CB', '#064e3b', tech_xy=(-45, 12))
+    draw_unit(42, c, 'CB', '#064e3b', tech_xy=(45, 12))
+    
+    if data['shell'] == 2:
+        draw_unit(-20, 20, 'FS', '#1e3a8a', tech_xy=(-25, 30))
+        draw_unit(20, 20, 'SS', '#1e3a8a', tech_xy=(25, 30))
+    else: draw_unit(0, 22, 'S', '#1e3a8a', tech_xy=(0, 32))
+
+    # 3. FULL ROUTE RECONSTRUCTION (The Logic)
+    def draw_full_route(start_x, start_y, route_name):
+        # Coordinates based on football theory: (vertical stem, break width, break depth)
+        schemes = {
+            "POST": [(0, 12), (15 if start_x < 0 else -15, 15)],
+            "CORNER": [(0, 12), (-12 if start_x < 0 else 12, 12)],
+            "OUT": [(0, 8), (-10 if start_x < 0 else 10, 0)],
+            "SLANT": [(0, 3), (12 if start_x < 0 else -12, 12)],
+            "COMEBACK": [(0, 14), (6 if start_x < 0 else -6, -4)],
+            "HITCH": [(0, 6), (2 if start_x < 0 else -2, -2)],
+            "SEAM": [(0, 35)]
+        }
+        
+        path_segments = schemes.get(route_name, [(0, 20)])
+        current_x, current_y = start_x, start_y
+        
+        for seg_x, seg_y in path_segments:
+            next_x = current_x + seg_x
+            next_y = current_y + seg_y
+            
+            p1 = p_warp(current_x, current_y)
+            p2 = p_warp(next_x, next_y)
+            
+            # Draw Route Stem/Branch
+            ax.annotate("", xy=p2, xytext=p1, 
+                        arrowprops=dict(arrowstyle="->", color="#facc15", lw=2, alpha=0.9))
+            
+            # Place Route Label at the break or end
+            plt.text(p2[0], p2[1]+1, route_name, color="#facc15", fontsize=5, ha='center', fontweight='bold')
+            current_x, current_y = next_x, next_y
+
+    # 4. OFFENSE personnel
     for x in np.linspace(-9, 9, 5): draw_unit(x, -1, 'OL', '#111827', '#374151')
     draw_unit(0, -4, 'QB', '#1f2937'); draw_unit(4, -4, 'RB', '#111827')
     
-    skill_pos = [(-45, 0), (45, 0), (20, 0)]
-    for i, (sx, sy) in enumerate(skill_pos):
-        draw_unit(sx, sy, "WR" if i < 2 else "TE", '#111827', '#374151')
+    wr_spots = [(-45, 0, data['r_set'][0]), (45, 0, data['r_set'][1]), (22, 0, data['r_set'][2])]
+    for wx, wy, wr_route in wr_spots:
+        draw_unit(wx, wy, "WR" if abs(wx)>30 else "TE", '#111827', '#374151')
         if offense_on:
-            tx, ty = p_warp(sx, sy)
-            route = data['routes'][i % len(data['routes'])]
-            target_x = 0 if "POST" in route else (sx + (15 if sx < 0 else -15) if "OUT" in route else sx)
-            target_y = 25 if "POST" in route or "SEAM" in route else 10
-            ax.annotate(route, xy=p_warp(target_x, target_y), xytext=(tx, ty),
-                        arrowprops=dict(arrowstyle="->", color="#facc15", lw=1.5, alpha=0.8))
+            draw_full_route(wx, wy, wr_route)
 
-    # 3. DEFENSE personnel & ATTACHED ZONES
-    # Front 4
-    for x in np.linspace(-12, 12, 4): draw_unit(x, 1, 'DL', '#161b22')
-    
-    # LBs (Linebackers)
-    for i, x in enumerate(np.linspace(-10, 10, 3)):
-        label = ['S', 'M', 'W'][i] # Sam, Mike, Will
-        draw_unit(x, 4.5, label, '#161b22', tech_xy=(x*1.5, 8))
-
-    # Corners
-    cush = data['cushion']
-    draw_unit(-40, cush, 'CB', '#064e3b', tech_xy=(-45, 10))
-    draw_unit(40, cush, 'CB', '#064e3b', tech_xy=(45, 10))
-    
-    # Safeties
-    if data['shell'] == 2:
-        draw_unit(-20, 20, 'FS', '#1e3a8a', tech_xy=(-25, 28))
-        draw_unit(20, 20, 'SS', '#1e3a8a', tech_xy=(25, 28))
-    else:
-        draw_unit(0, 22, 'S', '#1e3a8a', tech_xy=(0, 32))
-
-    plt.ylim(-15, 48); plt.xlim(-70, 70); plt.axis('off')
+    plt.ylim(-15, 55); plt.xlim(-75, 75); plt.axis('off')
     return fig
 
 # ---------------------------------------------------------
-# 4. INTEL ENGINE
+# 4. DETERMINISTIC INTEL
 # ---------------------------------------------------------
 def fetch_intel(bytes_data, ratio):
     h = hashlib.sha256(bytes_data).hexdigest()
     val = int(h, 16)
     shell = (val % 2) + 1
-    cushion = (val % 8) + 2
     
-    routes = ["POST", "SEAM", "OUT"] if shell == 2 else ["SLANT", "HITCH", "FADE"]
+    # Random but Image-Consistent Route Tree for Variety
+    bank = ["POST", "OUT", "SLANT", "CORNER", "HITCH", "COMEBACK", "SEAM"]
+    r_set = [bank[(val+i)%len(bank)] for i in range(3)]
+    
     view = "ALL-22 (WIDE)" if ratio > 1.7 else "EZ-CAM (PERSPECTIVE)"
-    
-    return {"shell": shell, "cov": "COVER " + str(shell * 2), "cushion": cushion, 
-            "view": view, "routes": routes, "hash": h[:8]}
+    return {"shell": shell, "cov": "COVER " + str(shell * 2), "cushion": (val % 8) + 2, 
+            "view": view, "r_set": r_set, "hash": h[:8]}
 
 # ---------------------------------------------------------
-# 5. USER UI
+# 5. UI INTERFACE
 # ---------------------------------------------------------
 render_header_white()
 
 with st.sidebar:
     st.markdown("<p style='font-size:0.65rem; color:#475569; letter-spacing:1px;'>OPERATIONAL HUB</p>", unsafe_allow_html=True)
     f = st.file_uploader("", type=['jpg','png','jpeg'], key=f"f_{st.session_state.uploader_key}", label_visibility="collapsed")
-    off_on = st.toggle("ACTIVATE ROUTE PREDICTION", value=False)
-    def_on = st.toggle("SHOW RED BUBBLE ZONES", value=False)
-    
-    st.markdown("<div style='margin-top:20px;' class='remove-btn'>", unsafe_allow_html=True)
+    off_on = st.toggle("ACTIVATE ROUTE RECONSTRUCTION", value=False)
+    def_on = st.toggle("ACTIVATE DEFENSIVE BUBBLES", value=False)
     if st.button("TERMINATE SESSION"): system_reboot()
-    st.markdown("</div>", unsafe_allow_html=True)
 
 if f:
-    img = Image.open(f)
-    results = fetch_intel(f.getvalue(), img.width/img.height)
-    
+    results = fetch_intel(f.getvalue(), Image.open(f).width / Image.open(f).height)
     st.markdown("---")
     
     c1, c2, c3, c4 = st.columns(4)
-    with c1: render_flap_ui("Personnel", "11 PERS.")
-    with c2: render_flap_ui("Target", results['cov'])
-    with c3: render_flap_ui("Shell", f"{results['shell']}-HIGH")
-    with c4: render_flap_ui("Perspective", "LOCKED")
+    with c1: render_flap_ui("Target", results['cov'])
+    with c2: render_flap_ui("Shell", f"{results['shell']}-HIGH")
+    with c3: render_flap_ui("Concept", results['r_set'][0])
+    with c4: render_flap_ui("Persp.", "CALIBRATED")
 
-    l, r = st.columns([2, 1], gap="large")
+    l, r = st.columns([2.2, 1], gap="large")
     with l:
         st.pyplot(draw_tactical_schematic(results, off_on, def_on), transparent=True)
-        st.image(img, use_container_width=True)
+        st.image(Image.open(f), use_container_width=True)
     with r:
-        st.info(f"**INTEL LOG // {results['hash']}**")
-        st.markdown(f"Detected Camera View: **{results['view']}**.")
-        st.write("Current zone mapping shows high liability in underneath seams.")
+        st.info(f"**TRACE ID // {results['id']}**")
+        st.markdown(f"**Field Strategy:** Attack plan emphasizes **{results['r_set'][0]}** logic to challenge depth-to-width ratios.")
 else:
     st.markdown("<div style='height:400px; border:1px dashed #1f2937; display:flex; justify-content:center; align-items:center;'><p style='color:#334155; letter-spacing:3px;'>FEED STANDBY</p></div>", unsafe_allow_html=True)
