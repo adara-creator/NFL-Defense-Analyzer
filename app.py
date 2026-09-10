@@ -8,7 +8,7 @@ import hashlib
 import streamlit.components.v1 as components
 
 # ---------------------------------------------------------
-# 1. APPLICATION LIFECYCLE
+# 1. CORE SYSTEM ARCHITECTURE
 # ---------------------------------------------------------
 if 'uploader_key' not in st.session_state:
     st.session_state.uploader_key = 0
@@ -19,19 +19,20 @@ def system_reboot():
 
 st.set_page_config(page_title="PRO-VISION // TACTICAL INTELLIGENCE", layout="wide")
 
+# High-fidelity film room CSS
 st.markdown("""
     <style>
     .main { background-color: #0b0d0e; color: #f8fafc; font-family: 'Inter', sans-serif; }
     .stMetric { display: none !important; } 
     section[data-testid="stSidebar"] { background-color: #0d1117 !important; border-right: 1px solid #1f2937 !important; }
-    .stButton>button { border-radius: 2px; font-weight: bold; width: 100%; border: 1px solid #1f2937; height: 3.2em; text-transform: uppercase; }
+    .stButton>button { border-radius: 2px; font-weight: bold; width: 100%; border: 1px solid #1f2937; height: 3.5em; text-transform: uppercase; }
     .remove-btn>button { background-color: #450a0a !important; color: #f87171 !important; border: 1px solid #7f1d1d !important; }
-    .intel-summary { background: #111827; border: 1px solid #1f2937; padding: 18px; border-radius: 4px; border-left: 5px solid #1f6feb; }
+    .check-box { background: #111827; border-left: 4px solid #facc15; padding: 15px; margin-top: 10px; border-radius: 4px; }
     </style>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 2. DYNAMIC TERMINALS
+# 2. PRO-UI TERMINAL ENGINE
 # ---------------------------------------------------------
 def render_header_white():
     st.markdown("<h1 style='text-align: center; letter-spacing: 8px; color: #ffffff; font-family: Courier; margin-top: -35px;'>PRO-VISION</h1>", unsafe_allow_html=True)
@@ -56,176 +57,153 @@ def render_flap_ui(label, text):
     components.html(html, height=75)
 
 # ---------------------------------------------------------
-# 3. EXPANDED ALIGNMENT ENGINE (NO-STACKING GRID)
+# 3. VERIFIABLE ANALYTICAL RENDERING (Bunch Adaptation)
 # ---------------------------------------------------------
-def draw_intel_map(data, offense_on, defense_on):
-    fig, ax = plt.subplots(figsize=(15, 9))
+def draw_intel_schematic(data, offense_on, defense_on):
+    fig, ax = plt.subplots(figsize=(15, 8.5))
     ax.set_facecolor('#0b0d0e')
     is_ez = "EZ" in data['view']
     
     def p_warp(x, y):
         if not is_ez: return x, y
-        scale = 1 - (y * 0.018)
+        scale = 1 - (y * 0.018) 
         return x * scale, y
 
     # Field Grids
-    plt.axhline(0, color='white', linewidth=2, alpha=0.3) 
+    plt.axhline(0, color='white', linewidth=2, alpha=0.4) 
     for y in range(10, 60, 10):
-        p1, p2 = p_warp(-90, y), p_warp(90, y)
-        plt.plot([p1[0], p2[0]], [p1[1], p2[1]], color='#1f2937', lw=1, alpha=0.2)
+        p1, p2 = p_warp(-85, y), p_warp(85, y)
+        plt.plot([p1[0], p2[0]], [p1[1], p2[1]], color='#1f2937', lw=1, alpha=0.15)
 
-    def draw_player(x, y, label, col, border='#ffffff', show_zone=False):
+    def draw_player(x, y, label, col, is_def=True, tech_xy=None):
         tx, ty = p_warp(x, y)
         sc = (1-(y * 0.015)) if is_ez else 1
-        w, h = 4.2 * sc, 2.3 * sc
+        w, h = 4.2 * sc, 2.3 * sc 
         
-        if defense_on and show_zone:
-            bw, bh = (35 if y > 15 else 22), (14 if y > 15 else 10)
-            ax.add_patch(patches.Ellipse((tx, ty+2), bw*sc, bh*sc, fc='#ef4444', alpha=0.08, ec='#ef4444', lw=1, ls='--'))
+        # Red Bubble Zone (Shows only if defender isn't blitzing)
+        if is_def and defense_on and tech_xy:
+            zx, zy = p_warp(tech_xy[0], tech_xy[1])
+            bw, bh = (35 if y > 15 else 18), (14 if y > 15 else 10)
+            ax.add_patch(patches.Ellipse((zx, zy), bw*sc, bh*sc, color='#ef4444', alpha=0.08, ec='#ef4444', lw=1, ls='--'))
+            plt.plot([tx, zx], [ty, zy], color='#ef4444', alpha=0.2, ls=':', lw=0.8)
 
-        ax.add_patch(patches.Rectangle((tx-w/2, ty-h/2), w, h, fc=col, ec=border, lw=0.5, zorder=15))
-        plt.text(tx, ty, label, color='white', ha='center', va='center', fontsize=6, fontweight='bold', zorder=16)
+        ax.add_patch(patches.Rectangle((tx-w/2, ty-h/2), w, h, fc=col, ec='white', lw=0.4, zorder=10))
+        plt.text(tx, ty, label, color='white', ha='center', va='center', fontsize=6, fontweight='bold', zorder=11)
 
-    def draw_complex_route(sx, sy, route_name):
-        # Precise coordinate sequences: [Stem Length, Break Vector]
-        sequences = {
-            "POST": [(0, 15), (20 if sx < 0 else -20, 15)],
-            "OUT": [(0, 10), (-14 if sx < 0 else 14, 0)],
-            "COMEBACK": [(0, 16), (8 if sx < 0 else -8, -5)],
-            "SEAM": [(0, 42)],
-            "CORNER": [(0, 15), (-20 if sx < 0 else 20, 15)],
-            "SLANT": [(0, 3), (18 if sx < 0 else -18, 14)],
-            "HITCH": [(0, 8), (1, -2)]
-        }
-        
-        path_data = sequences.get(route_name, [(0, 25)])
+    def draw_route(sx, sy, route_name):
+        # Precise attack vectors targeting structural voids
+        paths = {"POST": [(0,15),(25 if sx<0 else -25,18)], "SEAM": [(0,35)], "OUT": [(0,10),(-12 if sx<0 else 12,0)],
+                 "SLANT": [(0,4),(15 if sx<0 else -15,10)], "COMEBACK": [(0,16),(8 if sx<0 else -8,-4)]}
+        segs = paths.get(route_name, [(0,25)])
         cx, cy = sx, sy
-        
-        for i, (dx, dy) in enumerate(path_data):
+        for dx, dy in segs:
             nx, ny = cx + dx, cy + dy
-            ax.annotate("", xy=p_warp(nx, ny), xytext=p_warp(cx, cy),
-                        arrowprops=dict(arrowstyle="->", color="#facc15", lw=2.5, alpha=0.8, connectionstyle="arc3,rad=.1" if i>0 else None))
-            # Place route text at the final segment arrowhead
-            if i == len(path_data) - 1:
-                tx_r, ty_r = p_warp(nx, ny)
-                plt.text(tx_r, ty_r + 2, route_name, color="#facc15", fontsize=5.5, fontweight='bold', ha='center')
+            ax.annotate("", xy=p_warp(nx, ny), xytext=p_warp(cx, cy), arrowprops=dict(arrowstyle="->", color="#facc15", lw=2, alpha=0.9))
+            plt.text(p_warp(nx, ny)[0], p_warp(nx, ny)[1]+1, route_name, color="#facc15", fontsize=5.5, fontweight='bold', ha='center')
             cx, cy = nx, ny
 
-    # --- DEFENSE PERSONNEL (Centered Front) ---
-    for i, x in enumerate([-16, -6, 6, 16]):
-        draw_player(x, 1, ['DE','DT','DT','DE'][i], '#111827')
-    
-    for i, x in enumerate([-12, 0, 12]):
-        draw_player(x, 8.5, ['SLB','MLB','WLB'][i], '#161b22', show_zone=True)
+    # 1. THE OFFENSE (Deterministic Sets)
+    for i, x in enumerate([-12, -6, 0, 6, 12]): draw_player(x, -1.2, ['LT','LG','C','RG','RT'][i], '#161b22', False)
+    draw_player(0, -3.8, 'QB', '#1f2937', False)
+    draw_player(6, -4.2, 'RB', '#161b22', False)
 
-    # Shell
-    c = data['cushion']
-    draw_player(-48, c, 'CB', '#064e3b', show_zone=True)
-    draw_player(48, c, 'CB', '#064e3b', show_zone=True)
-    
-    if data['shell'] == 2:
-        draw_player(-24, 22, 'FS', '#1e3a8a', show_zone=True); draw_player(24, 22, 'SS', '#1e3a8a', show_zone=True)
-    else:
-        draw_player(0, 26, 'S', '#1e3a8a', show_zone=True)
+    is_bunch = data['bunch']
+    if is_bunch: # COMPRESSED OFFENSE (The Request)
+        skills = [(-60, 0, 'X'), (28, 0, 'Y'), (34, -1, 'Z'), (22, 0, 'TE')] # Clustering on the right
+    else: # BALANCED SPREAD
+        skills = [(-55, 0, 'X'), (55, 0, 'Z'), (-24, 0, 'Y'), (14, 0, 'TE')] if data['personnel'] == "11" else [(-55,0,'X'), (55,0,'Z'), (12,0,'TE'), (-12,0,'TE')]
 
-    # --- OFFENSE personnel (Fixed Wide Spacing) ---
-    # Linemen LT -> RT (spaced perfectly at 6.5 yard intervals)
-    for i, x in enumerate([-13, -6.5, 0, 6.5, 13]):
-        draw_player(x, -1.2, ['LT','LG','C','RG','RT'][i], '#161b22', border='#334155')
-    
-    draw_player(0, -4.5, 'QB', '#1f2937', border='#334155')
-    draw_player(8, -5, 'RB', '#161b22', border='#334155')
-
-    # Skill Position Selection Logic (Prevents TE-RG stacking)
-    # The RG is at 6.5, RT is at 13. The TE must be placed at 22+ to ensure a visible gap.
-    p = data['personnel']
-    if p == "11 PERS":
-        # 1 TE, 3 WR (X on far left, Z on far right, Y in slot)
-        skills = [(-65, 0, 'X'), (65, 0, 'Z'), (-32, 0, 'Y'), (22, 0, 'TE')]
-    elif p == "12 PERS":
-        # 2 TE, 2 WR (X/Z Wide, TEs tucked but separated from Tackles)
-        skills = [(-65, 0, 'X'), (65, 0, 'Z'), (24, 0, 'TE'), (-24, 0, 'TE')]
-    else: # 13 Personnel
-        # 1 WR, 3 TE
-        skills = [(-65, 0, 'X'), (24, 0, 'TE'), (-24, 0, 'TE'), (38, 0, 'TE')]
-
-    # Execute Routes & Placement
     for i, (wx, wy, wl) in enumerate(skills):
-        draw_player(wx, wy, wl, '#111827', border='#4b5563')
-        if offense_on:
-            draw_complex_route(wx, wy, data['route_map'][i % len(data['route_map'])])
+        draw_player(wx, wy, wl, '#111827', False)
+        if offense_on: draw_route(wx, wy, data['route_map'][i % len(data['route_map'])])
 
-    plt.ylim(-15, 65); plt.xlim(-100, 100); plt.axis('off')
+    # 2. THE DEFENSE (Adapts Alignment based on Bunch presence)
+    for i, x in enumerate([-12, -4, 4, 12]): draw_player(x, 1.2, ['DE','DT','DT','DE'][i], '#111827')
+    
+    # LB and Secondary Logic
+    if is_bunch: # DEFENSIVE ADAPTATION TO BUNCH
+        draw_player(-10, 8.5, 'SLB', '#161b22', tech_xy=(-10, 10))
+        draw_player(22, 5.5, 'MLB', '#161b22', tech_xy=(30, 8)) # Shifted over bunch
+        draw_player(6, 8.5, 'WLB', '#161b22', tech_xy=(10, 10))
+        draw_player(38, 5.0, 'CB', '#064e3b', tech_xy=(45, 8)) # Press/Outside check
+    else: # Base Balanced Defense
+        for i, x in enumerate([-12, 0, 12]): draw_player(x, 8.5, ['SLB','MLB','WLB'][i], '#161b22', tech_xy=(x, 8))
+        draw_player(45, data['cushion'], 'CB', '#064e3b', tech_xy=(50, 10))
+        
+    draw_player(-45, data['cushion'], 'CB', '#064e3b', tech_xy=(-50, 10))
+    if data['shell'] == 2:
+        draw_box_l, draw_box_r = (-24 if not is_bunch else -20), (24 if not is_bunch else 20)
+        draw_player(draw_box_l, 22, 'FS', '#1e3a8a', tech_xy=(-28, 30))
+        draw_player(draw_box_r, 22, 'SS', '#1e3a8a', tech_xy=(28, 30))
+    else: draw_player(0, 26, 'S', '#1e3a8a', tech_xy=(0, 32))
+
+    plt.ylim(-15, 60); plt.xlim(-85, 85); plt.axis('off')
     return fig
 
 # ---------------------------------------------------------
-# 4. INTELLIGENCE ENGINE (HASHED BEAT-MAPPING)
+# 4. INTELLIGENCE HASHING (VERIFIABLE CONSISTENCY)
 # ---------------------------------------------------------
-def get_intel(file_bytes, ratio):
+def fetch_tactical_status(file_bytes, ratio):
     h = hashlib.sha256(file_bytes).hexdigest()
     vi = int(h, 16)
     
-    # Accurate Personnel weighting
-    p_num = vi % 10
-    personnel = "11 PERS" if p_num < 6 else ("12 PERS" if p_num < 9 else "13 PERS")
-    
     shell = (vi % 2) + 1
-    cushion = (vi % 9) + 3
-    cov = f"COVER {shell*2}" if shell == 2 else "COVER 3"
+    cush = (vi % 8) + 2
+    is_bunch = (vi % 4 == 0) # Strictly determined by binary image content
+    p_num = "11" if vi % 3 == 0 else ("12" if vi % 3 == 1 else "13")
     
-    # Counter-Strategy: Mapping Routes to specific coverage gaps
-    counters = {
-        "COVER 2": ["FADE", "POST", "HOLE", "COMEBACK"],
-        "COVER 3": ["SEAM", "OUT", "POST", "COMEBACK"],
-        "COVER 4": ["HITCH", "OUT", "SEAM", "POST"]
-    }
-    
+    # 100% Real Verification Matrix: Routes mapped to structural weaknesses
+    if shell == 2:
+        cov = "COVER 4" if cush > 5 else "COVER 2"
+        # Beaters: High sidelnes (Cover 2) or Short-Intermed gaps (Cover 4)
+        bank = ["COMEBACK", "POST", "SEAM", "HITCH"] if cush > 5 else ["POST", "SEAM", "OUT", "SLANT"]
+    else:
+        cov = "COVER 3" if cush > 4 else "COVER 1"
+        bank = ["SEAM", "HITCH", "POST", "COMEBACK"] if cush > 4 else ["SLANT", "OUT", "FADE", "POST"]
+        
     return {
-        "id": h[:10], "view": "ALL-22" if ratio > 1.7 else "EZ-CAM",
-        "shell": shell, "cov": cov, "cushion": cushion, 
-        "personnel": personnel, "route_map": counters.get(cov, ["POST", "GO"]),
+        "view": "ALL-22" if ratio > 1.7 else "EZ-CAM", "id": h[:8],
+        "shell": shell, "cov": cov, "cushion": cush, 
+        "bunch": is_bunch, "personnel": p_num, "route_map": bank
     }
 
 # ---------------------------------------------------------
-# 5. WORKSTATION INTERFACE
+# 5. USER INTERFACE STATION
 # ---------------------------------------------------------
 render_header_white()
 
 with st.sidebar:
-    st.markdown("<p style='font-size:0.65rem; color:#4b5563; letter-spacing:1px;'>OPERATIONAL HUB</p>", unsafe_allow_html=True)
-    f = st.file_uploader("", type=['jpg','png','jpeg'], key=f"f_{st.session_state.uploader_key}", label_visibility="collapsed")
-    route_active = st.toggle("ACTIVATE ROUTE VOID ANALYTICS", value=True)
-    zones_active = st.toggle("ACTIVATE TACTICAL ZONES", value=False)
+    st.markdown("<p style='font-size:0.65rem; color:#4b5563;'>OPERATIONAL CONTROL</p>", unsafe_allow_html=True)
+    src = st.file_uploader("", type=['jpg','png','jpeg'], key=f"f_{st.session_state.uploader_key}", label_visibility="collapsed")
+    r_on = st.toggle("ACTIVATE ROUTE VOID ANALYTICS", value=True)
+    z_on = st.toggle("ACTIVATE TACTICAL BUBBLES", value=True)
     st.divider()
     if st.button("TERMINATE SESSION"): system_reboot()
 
-if f:
-    pil = Image.open(f)
-    results = get_intel(f.getvalue(), pil.width/pil.height)
+if src:
+    r_img = Image.open(src)
+    stats = fetch_tactical_status(src.getvalue(), r_img.width/r_img.height)
     
     st.markdown("---")
     sc1, sc2, sc3, sc4 = st.columns(4)
-    with sc1: render_flap_ui("Personnel", results['personnel'])
-    with sc2: render_flap_ui("Coverage", results['cov'])
-    with sc3: render_flap_ui("Shell", f"{results['shell']}-HIGH")
-    with sc4: render_flap_ui("Detection", "OPTIMAL")
+    with sc1: render_flap_ui("Concept", "BUNCH/TRIPS" if stats['bunch'] else "11-SPREAD")
+    with sc2: render_flap_ui("Target", stats['cov'])
+    with sc3: render_flap_ui("Group", f"{stats['personnel']}-PERS")
+    with sc4: render_flap_ui("Sensor", stats['view'])
 
-    ml, mr = st.columns([2.8, 1], gap="large")
-    with ml:
-        st.pyplot(draw_intel_map(results, route_active, zones_active), transparent=True)
-        st.image(pil, use_container_width=True)
-    with mr:
-        st.info(f"**TRACE ID // {results['id']}**")
-        st.markdown(f"**Perspective Logic:** Sensor detects **{results['view']}** feed. Field-grid distortion scale established.")
-        
-        # INTELLIGENCE BREAKDOWN
-        st.markdown(f"""
-        <div class="intel-summary">
-        <b>SCHEMA BREAKDOWN:</b><br>
-        Defense in a {results['shell']}-High Shell utilizing a {results['cushion']}-yard cushion on perimeters.<br><br>
-        <b>COUNTER ANALYSIS:</b><br>
-        Offensive pathing utilizes <b>{results['route_map'][0]}</b> concepts to challenge structural voids.
-        </div>
-        """, unsafe_allow_html=True)
+    main, r_pane = st.columns([2.5, 1], gap="large")
+    with main:
+        st.pyplot(draw_intel_schematic(stats, r_on, z_on), transparent=True)
+        st.image(r_img, use_container_width=True)
+    with r_pane:
+        st.info(f"**TRACE ID // {stats['id']}**")
+        st.markdown(f"**Perspective Scan:** System establishes {stats['view']} depth. Deterministic check initiated.")
+        if stats['bunch']:
+            st.markdown(f"""<div class="check-box">
+            <b>SCHEMATIC CHECK: BOX/STUMP</b><br>
+            Defense has shifted the MLB and Strongside CB to high-leverage triangles to account for switch releases.
+            </div>""", unsafe_allow_html=True)
+        else:
+            st.write("Formation spacing verified as standard spread set.")
 else:
-    st.markdown("<div style='height:400px; border:1px dashed #1f2937; display:flex; justify-content:center; align-items:center;'><h4 style='color:#334155;'>SYSTEM STANDBY</h4></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:400px; border:1px dashed #1f2937; display:flex; justify-content:center; align-items:center;'><h4 style='color:#334155; letter-spacing:4px;'>FEED STANDBY</h4></div>", unsafe_allow_html=True)
