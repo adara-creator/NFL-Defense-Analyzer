@@ -1,6 +1,0 @@
-streamlit
-pillow
-numpy
-opencv-python-headless
-scikit-learn
-# ultralytics  # uncomment to enable the "yolo" detector backend
