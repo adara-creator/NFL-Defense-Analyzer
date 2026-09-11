@@ -1,6 +1,6 @@
 streamlit
-pandas
-matplotlib
 pillow
 numpy
-plotly
+opencv-python-headless
+scikit-learn
+# ultralytics  # uncomment to enable the "yolo" detector backend
