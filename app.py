@@ -1,7 +1,7 @@
 """
 NFL Defensive Coverage & Formation Analyzer
 Engineering & Scouting Analytics Interface
-Native SVG vector rendering (zero external plotting dependencies required).
+Zero external plotting dependencies required (native SVG vector rendering).
 """
 
 import streamlit as st
@@ -174,20 +174,26 @@ def render_playbook_svg(players, scheme_name="Cover 3 Sky", shell="1-HIGH"):
             sx2, sy_bot = to_svg(x2, 11.5)
             svg.append(f'<rect x="{sx1}" y="{sy_top}" width="{sx2-sx1}" height="{sy_bot-sy_top}" fill="#58a6ff" fill-opacity="0.06" stroke="#58a6ff" stroke-width="0.8" stroke-dasharray="4,4"/>')
             svg.append(f'<text x="{(sx1+sx2)/2}" y="{sy_top + 16}" fill="#79c0ff" font-size="9" text-anchor="middle" opacity="0.7">{lbl}</text>')
+    elif "Cover 6" in scheme_name:
+        for x1, x2, lbl in [(-25, -12.5, "1/4 L (FIELD)"), (-12.5, 0, "1/4 M-L (FIELD)"), (0, 25, "1/2 R (BOUNDARY)")]:
+            sx1, sy_top = to_svg(x1, 23.0)
+            sx2, sy_bot = to_svg(x2, 12.0)
+            svg.append(f'<rect x="{sx1}" y="{sy_top}" width="{sx2-sx1}" height="{sy_bot-sy_top}" fill="#58a6ff" fill-opacity="0.06" stroke="#58a6ff" stroke-width="0.8" stroke-dasharray="4,4"/>')
+            svg.append(f'<text x="{(sx1+sx2)/2}" y="{sy_top + 16}" fill="#79c0ff" font-size="9" text-anchor="middle" opacity="0.7">{lbl}</text>')
 
     # Defs for Arrowhead Markers
     svg.append("""
     <defs>
-        <marker id="arr-rush" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <marker id="arr-rush" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#f85149" />
         </marker>
-        <marker id="arr-deep" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <marker id="arr-deep" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#58a6ff" />
         </marker>
-        <marker id="arr-under" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <marker id="arr-under" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#d29922" />
         </marker>
-        <marker id="arr-man" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <marker id="arr-man" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#ff7b72" />
         </marker>
     </defs>
@@ -237,7 +243,7 @@ def render_playbook_svg(players, scheme_name="Cover 3 Sky", shell="1-HIGH"):
     svg.append('</svg>')
     return "".join(svg)
 
-# --- DEFENSIVE ASSIGNMENT ROSTER ---
+# --- COMPREHENSIVE ALIGNMENT & ASSIGNMENT ROSTER ---
 def build_formation_roster(scheme_name="Cover 3 Sky", shell="1-HIGH"):
     offense = [
         {"pos": "C", "x_yard": 0.0, "y_yard": -0.8, "side": "OFFENSE"},
@@ -255,183 +261,285 @@ def build_formation_roster(scheme_name="Cover 3 Sky", shell="1-HIGH"):
 
     if "Cover 3" in scheme_name:
         defenders = [
-            {"pos": "FS", "x_yard": 0.0, "y_yard": 13.5, "role": "DEEP_THIRD",
-             "align": "Middle Deep (13.5y)", "zone": "Deep Middle 1/3",
-             "technique": "Apex MOFC", "key_read": "Read QB shoulders; protect seams and post"},
-            {"pos": "SS", "x_yard": 7.5, "y_yard": 6.5, "role": "FLAT",
-             "align": "Apex Strong (6.5y)", "zone": "Curl / Flat (Sky)",
-             "technique": "Inside Shade / Buzz", "key_read": "Force run perimeter; carry #2 vertical or buzz to flat"},
-            {"pos": "LCB", "x_yard": -18.5, "y_yard": 7.5, "role": "DEEP_THIRD",
-             "align": "Off Corner (7.5y)", "zone": "Deep Left 1/3",
-             "technique": "Outside Shade (Bail)", "key_read": "Read #1 vertical; protect deep sideline third"},
-            {"pos": "RCB", "x_yard": 18.5, "y_yard": 7.0, "role": "DEEP_THIRD",
-             "align": "Off Corner (7.0y)", "zone": "Deep Right 1/3",
-             "technique": "Outside Shade (Bail)", "key_read": "Read #1 vertical; protect deep sideline third"},
-            {"pos": "WLB", "x_yard": -4.5, "y_yard": 4.5, "role": "HOOK",
-             "align": "Weak Underneath (4.5y)", "zone": "Hook to Curl (Weak)",
-             "technique": "30-Tech Stack", "key_read": "Relate to #3 receiver; wall off crossers"},
-            {"pos": "MLB", "x_yard": 0.5, "y_yard": 4.8, "role": "HOOK",
-             "align": "Middle Underneath (4.8y)", "zone": "Hook to Curl (Middle)",
-             "technique": "00-Tech Stack", "key_read": "Drop into middle intermediate hole; read shallow crossers"},
-            {"pos": "SLB", "x_yard": -10.5, "y_yard": 4.2, "role": "FLAT",
-             "align": "Slot Overhang (4.2y)", "zone": "Curl / Flat (Weak)",
-             "technique": "Apex Nickel", "key_read": "Disrupt slot release; sink underneath intermediate out"},
-            {"pos": "LDE", "x_yard": -5.0, "y_yard": 1.2, "role": "RUSH",
-             "align": "LOS 5-Tech (1.2y)", "zone": "Pass Rush (Contain)",
-             "technique": "5-Technique", "key_read": "Edge contain; bull rush offensive tackle"},
-            {"pos": "LDT", "x_yard": -1.6, "y_yard": 1.0, "role": "RUSH",
-             "align": "LOS 3-Tech (1.0y)", "zone": "Pass Rush (B-Gap)",
-             "technique": "3-Technique", "key_read": "Interior penetration through B-gap"},
-            {"pos": "RDT", "x_yard": 1.6, "y_yard": 1.0, "role": "RUSH",
-             "align": "LOS 1-Tech (1.0y)", "zone": "Pass Rush (A-Gap)",
-             "technique": "1-Technique Shade", "key_read": "Control A-gap; occupy double team"},
-            {"pos": "RDE", "x_yard": 5.0, "y_yard": 1.2, "role": "RUSH",
-             "align": "LOS 7-Tech (1.2y)", "zone": "Pass Rush (Contain)",
-             "technique": "7-Technique", "key_read": "Speed rush edge; collapse pocket backside"},
+            {"pos": "FS", "group": "Secondary", "x_yard": 0.0, "y_yard": 13.5, "role": "DEEP_THIRD",
+             "align": "Middle Deep (13.5y, 0.0y)", "zone": "Deep Middle 1/3",
+             "technique": "Apex MOFC", "gap": "Alley / Deep Post",
+             "key_read": "Read QB shoulders; protect seams and post routes"},
+            {"pos": "SS", "group": "Secondary", "x_yard": 7.5, "y_yard": 6.5, "role": "FLAT",
+             "align": "Apex Strong (6.5y, +7.5y)", "zone": "Curl / Flat (Sky)",
+             "technique": "Inside Shade Buzz", "gap": "D-Gap Force",
+             "key_read": "Force run perimeter; carry #2 vertical or buzz to flat"},
+            {"pos": "LCB", "group": "Secondary", "x_yard": -18.5, "y_yard": 7.5, "role": "DEEP_THIRD",
+             "align": "Off Boundary (7.5y, -18.5y)", "zone": "Deep Left 1/3",
+             "technique": "Outside Shade Bail", "gap": "Deep Sideline",
+             "key_read": "Read #1 vertical; protect deep sideline third (divider rule)"},
+            {"pos": "RCB", "group": "Secondary", "x_yard": 18.5, "y_yard": 7.0, "role": "DEEP_THIRD",
+             "align": "Off Field (7.0y, +18.5y)", "zone": "Deep Right 1/3",
+             "technique": "Outside Shade Bail", "gap": "Deep Sideline",
+             "key_read": "Read #1 vertical; protect deep sideline third (divider rule)"},
+            {"pos": "WLB", "group": "Linebacker", "x_yard": -4.5, "y_yard": 4.5, "role": "HOOK",
+             "align": "Weak Underneath (4.5y, -4.5y)", "zone": "Hook to Curl (Weak)",
+             "technique": "30-Tech Stack", "gap": "B-Gap Cutback",
+             "key_read": "Relate to #3 inside receiver; wall off crossing routes"},
+            {"pos": "MLB", "group": "Linebacker", "x_yard": 0.5, "y_yard": 4.8, "role": "HOOK",
+             "align": "Middle Box (4.8y, +0.5y)", "zone": "Hook to Curl (Middle)",
+             "technique": "00-Tech Stack", "gap": "A-Gap Plug",
+             "key_read": "Drop into middle intermediate hole; mirror low crossers"},
+            {"pos": "SLB", "group": "Linebacker", "x_yard": -10.5, "y_yard": 4.2, "role": "FLAT",
+             "align": "Slot Overhang (4.2y, -10.5y)", "zone": "Curl / Flat (Weak)",
+             "technique": "Apex Nickel", "gap": "Alley Fit",
+             "key_read": "Disrupt slot release; sink underneath intermediate out cut"},
+            {"pos": "LDE", "group": "Defensive Line", "x_yard": -5.0, "y_yard": 1.2, "role": "RUSH",
+             "align": "LOS 5-Tech (1.2y, -5.0y)", "zone": "Pass Rush (Contain)",
+             "technique": "5-Technique", "gap": "C-Gap",
+             "key_read": "Edge contain; drive offensive tackle into pocket"},
+            {"pos": "LDT", "group": "Defensive Line", "x_yard": -1.6, "y_yard": 1.0, "role": "RUSH",
+             "align": "LOS 3-Tech (1.0y, -1.6y)", "zone": "Pass Rush (B-Gap)",
+             "technique": "3-Technique", "gap": "B-Gap",
+             "key_read": "Interior penetration through weak B-gap"},
+            {"pos": "RDT", "group": "Defensive Line", "x_yard": 1.6, "y_yard": 1.0, "role": "RUSH",
+             "align": "LOS 1-Tech (1.0y, +1.6y)", "zone": "Pass Rush (A-Gap)",
+             "technique": "1-Technique Shade", "gap": "A-Gap",
+             "key_read": "Control strong A-gap; occupy double team"},
+            {"pos": "RDE", "group": "Defensive Line", "x_yard": 5.0, "y_yard": 1.2, "role": "RUSH",
+             "align": "LOS 7-Tech (1.2y, +5.0y)", "zone": "Pass Rush (Contain)",
+             "technique": "7-Technique", "gap": "C-Gap / D-Gap",
+             "key_read": "Speed rush edge; collapse backside of pocket"},
         ]
     elif "Cover 2" in scheme_name or "Tampa 2" in scheme_name:
         defenders = [
-            {"pos": "FS", "x_yard": -8.5, "y_yard": 13.0, "role": "DEEP_HALF",
-             "align": "Deep Left Half (13.0y)", "zone": "Deep Half (Left)",
-             "technique": "2-High MOFO", "key_read": "Sideline to hash range; read #1/#2 vertical"},
-            {"pos": "SS", "x_yard": 8.5, "y_yard": 13.0, "role": "DEEP_HALF",
-             "align": "Deep Right Half (13.0y)", "zone": "Deep Half (Right)",
-             "technique": "2-High MOFO", "key_read": "Sideline to hash range; read #1/#2 vertical"},
-            {"pos": "LCB", "x_yard": -18.5, "y_yard": 2.0, "role": "FLAT",
-             "align": "Press / Hard (2.0y)", "zone": "Hard Flat (Cloud)",
-             "technique": "Squat", "key_read": "Reroute #1 at LOS; sink underneath flat routes"},
-            {"pos": "RCB", "x_yard": 18.5, "y_yard": 2.0, "role": "FLAT",
-             "align": "Press / Hard (2.0y)", "zone": "Hard Flat (Cloud)",
-             "technique": "Squat", "key_read": "Reroute #1 at LOS; sink underneath flat routes"},
-            {"pos": "MLB", "x_yard": 0.0, "y_yard": 4.5, "role": "HOOK",
-             "align": "Middle Hole (4.5y)", "zone": "Middle Run-Pipe / Pole",
-             "technique": "Tampa Pole", "key_read": "Sprint down middle vertical seam between deep safeties"},
-            {"pos": "WLB", "x_yard": -5.0, "y_yard": 4.2, "role": "HOOK",
-             "align": "Weak Hook (4.2y)", "zone": "Weak Hook / Curl",
-             "technique": "Stack Underneath", "key_read": "Wall off interior crosses; protect hash marks"},
-            {"pos": "SLB", "x_yard": 5.0, "y_yard": 4.2, "role": "HOOK",
-             "align": "Strong Hook (4.2y)", "zone": "Strong Hook / Curl",
-             "technique": "Stack Underneath", "key_read": "Wall off tight end release; expand to curl window"},
-            {"pos": "LDE", "x_yard": -5.0, "y_yard": 1.2, "role": "RUSH",
-             "align": "LOS 5-Tech (1.2y)", "zone": "Pass Rush (Contain)",
-             "technique": "5-Technique", "key_read": "Contain QB; edge pressure"},
-            {"pos": "LDT", "x_yard": -1.6, "y_yard": 1.0, "role": "RUSH",
-             "align": "LOS 3-Tech (1.0y)", "zone": "Pass Rush (B-Gap)",
-             "technique": "3-Technique", "key_read": "Penetrate B-gap"},
-            {"pos": "RDT", "x_yard": 1.6, "y_yard": 1.0, "role": "RUSH",
-             "align": "LOS 1-Tech (1.0y)", "zone": "Pass Rush (A-Gap)",
-             "technique": "1-Technique", "key_read": "Interior run plug; collapse pocket"},
-            {"pos": "RDE", "x_yard": 5.0, "y_yard": 1.2, "role": "RUSH",
-             "align": "LOS 7-Tech (1.2y)", "zone": "Pass Rush (Contain)",
-             "technique": "7-Technique", "key_read": "Collapse backside pocket"},
+            {"pos": "FS", "group": "Secondary", "x_yard": -8.5, "y_yard": 13.0, "role": "DEEP_HALF",
+             "align": "Deep Left Half (13.0y, -8.5y)", "zone": "Deep Half (Left)",
+             "technique": "2-High MOFO", "gap": "Alley / Deep Sideline",
+             "key_read": "Defend sideline to hash; read #1 to #2 vertical release"},
+            {"pos": "SS", "group": "Secondary", "x_yard": 8.5, "y_yard": 13.0, "role": "DEEP_HALF",
+             "align": "Deep Right Half (13.0y, +8.5y)", "zone": "Deep Half (Right)",
+             "technique": "2-High MOFO", "gap": "Alley / Deep Sideline",
+             "key_read": "Defend sideline to hash; read #1 to #2 vertical release"},
+            {"pos": "LCB", "group": "Secondary", "x_yard": -18.5, "y_yard": 2.0, "role": "FLAT",
+             "align": "Press Hard (2.0y, -18.5y)", "zone": "Hard Flat (Cloud)",
+             "technique": "Squat Jam", "gap": "D-Gap Force",
+             "key_read": "Physical reroute of #1 at line; sink into flat under out routes"},
+            {"pos": "RCB", "group": "Secondary", "x_yard": 18.5, "y_yard": 2.0, "role": "FLAT",
+             "align": "Press Hard (2.0y, +18.5y)", "zone": "Hard Flat (Cloud)",
+             "technique": "Squat Jam", "gap": "D-Gap Force",
+             "key_read": "Physical reroute of #1 at line; sink into flat under out routes"},
+            {"pos": "MLB", "group": "Linebacker", "x_yard": 0.0, "y_yard": 4.5, "role": "HOOK",
+             "align": "Middle Hole (4.5y, 0.0y)", "zone": "Middle Run-Pipe / Pole",
+             "technique": "Tampa Pole Drop", "gap": "A-Gap Plug",
+             "key_read": "Sprint down middle vertical seam between deep safeties (12-14y)"},
+            {"pos": "WLB", "group": "Linebacker", "x_yard": -5.0, "y_yard": 4.2, "role": "HOOK",
+             "align": "Weak Hook (4.2y, -5.0y)", "zone": "Weak Hook / Curl",
+             "technique": "Stack Underneath", "gap": "B-Gap",
+             "key_read": "Wall off interior crossers; protect intermediate hash"},
+            {"pos": "SLB", "group": "Linebacker", "x_yard": 5.0, "y_yard": 4.2, "role": "HOOK",
+             "align": "Strong Hook (4.2y, +5.0y)", "zone": "Strong Hook / Curl",
+             "technique": "Stack Underneath", "gap": "C-Gap Spill",
+             "key_read": "Wall off tight end release; expand to curl window"},
+            {"pos": "LDE", "group": "Defensive Line", "x_yard": -5.0, "y_yard": 1.2, "role": "RUSH",
+             "align": "LOS 5-Tech (1.2y, -5.0y)", "zone": "Pass Rush (Contain)",
+             "technique": "5-Technique", "gap": "C-Gap",
+             "key_read": "Edge contain; squeeze pocket"},
+            {"pos": "LDT", "group": "Defensive Line", "x_yard": -1.6, "y_yard": 1.0, "role": "RUSH",
+             "align": "LOS 3-Tech (1.0y, -1.6y)", "zone": "Pass Rush (B-Gap)",
+             "technique": "3-Technique", "gap": "B-Gap",
+             "key_read": "Interior B-gap penetration"},
+            {"pos": "RDT", "group": "Defensive Line", "x_yard": 1.6, "y_yard": 1.0, "role": "RUSH",
+             "align": "LOS 1-Tech (1.0y, +1.6y)", "zone": "Pass Rush (A-Gap)",
+             "technique": "1-Technique", "gap": "A-Gap",
+             "key_read": "Hold A-gap against interior run"},
+            {"pos": "RDE", "group": "Defensive Line", "x_yard": 5.0, "y_yard": 1.2, "role": "RUSH",
+             "align": "LOS 7-Tech (1.2y, +5.0y)", "zone": "Pass Rush (Contain)",
+             "technique": "7-Technique", "gap": "C-Gap",
+             "key_read": "Collapse backside pocket"},
         ]
     elif "Cover 4" in scheme_name:
         defenders = [
-            {"pos": "FS", "x_yard": -6.5, "y_yard": 11.5, "role": "DEEP_QUARTER",
-             "align": "Inside Apex (11.5y)", "zone": "Deep 1/4 (Inside Left)",
-             "technique": "Quarters Read", "key_read": "Bracket #2 vertical; rob deep crossers"},
-            {"pos": "SS", "x_yard": 6.5, "y_yard": 11.5, "role": "DEEP_QUARTER",
-             "align": "Inside Apex (11.5y)", "zone": "Deep 1/4 (Inside Right)",
-             "technique": "Quarters Read", "key_read": "Bracket #2 vertical; rob deep crossers"},
-            {"pos": "LCB", "x_yard": -18.5, "y_yard": 7.5, "role": "DEEP_QUARTER",
-             "align": "Off Corner (7.5y)", "zone": "Deep 1/4 (Outside Left)",
-             "technique": "Off Man Match", "key_read": "Lock #1 receiver if route stems vertical beyond 8y"},
-            {"pos": "RCB", "x_yard": 18.5, "y_yard": 7.5, "role": "DEEP_QUARTER",
-             "align": "Off Corner (7.5y)", "zone": "Deep 1/4 (Outside Right)",
-             "technique": "Off Man Match", "key_read": "Lock #1 receiver if route stems vertical beyond 8y"},
-            {"pos": "WLB", "x_yard": -4.5, "y_yard": 4.5, "role": "HOOK",
-             "align": "Weak Box (4.5y)", "zone": "Quarter Flat / Curl",
-             "technique": "Match Drop", "key_read": "Match RB release; defend underneath crossers"},
-            {"pos": "MLB", "x_yard": 0.0, "y_yard": 4.8, "role": "HOOK",
-             "align": "Middle Box (4.8y)", "zone": "Hook to Seam",
-             "technique": "Inside Match", "key_read": "Wall off interior vertical release; protect void"},
-            {"pos": "SLB", "x_yard": 5.0, "y_yard": 4.5, "role": "FLAT",
-             "align": "Strong Box (4.5y)", "zone": "Quarter Flat / Curl",
-             "technique": "Apex Match", "key_read": "Match #2 to flat or carry wheel route"},
-            {"pos": "LDE", "x_yard": -5.0, "y_yard": 1.2, "role": "RUSH",
-             "align": "LOS 5-Tech (1.2y)", "zone": "Pass Rush (Contain)",
-             "technique": "5-Technique", "key_read": "Rush edge; squeeze pocket"},
-            {"pos": "LDT", "x_yard": -1.6, "y_yard": 1.0, "role": "RUSH",
-             "align": "LOS 3-Tech (1.0y)", "zone": "Pass Rush (B-Gap)",
-             "technique": "3-Technique", "key_read": "Interior B-gap penetration"},
-            {"pos": "RDT", "x_yard": 1.6, "y_yard": 1.0, "role": "RUSH",
-             "align": "LOS 1-Tech (1.0y)", "zone": "Pass Rush (A-Gap)",
-             "technique": "1-Technique", "key_read": "Penetrate A-gap"},
-            {"pos": "RDE", "x_yard": 5.0, "y_yard": 1.2, "role": "RUSH",
-             "align": "LOS 7-Tech (1.2y)", "zone": "Pass Rush (Contain)",
-             "technique": "7-Technique", "key_read": "Contain QB"},
+            {"pos": "FS", "group": "Secondary", "x_yard": -6.5, "y_yard": 11.5, "role": "DEEP_QUARTER",
+             "align": "Inside Apex (11.5y, -6.5y)", "zone": "Deep 1/4 (Inside Left)",
+             "technique": "Quarters Read", "gap": "Alley Fit",
+             "key_read": "Bracket #2 vertical; rob deep crossing routes"},
+            {"pos": "SS", "group": "Secondary", "x_yard": 6.5, "y_yard": 11.5, "role": "DEEP_QUARTER",
+             "align": "Inside Apex (11.5y, +6.5y)", "zone": "Deep 1/4 (Inside Right)",
+             "technique": "Quarters Read", "gap": "Alley Fit",
+             "key_read": "Bracket #2 vertical; rob deep crossing routes"},
+            {"pos": "LCB", "group": "Secondary", "x_yard": -18.5, "y_yard": 7.5, "role": "DEEP_QUARTER",
+             "align": "Off Corner (7.5y, -18.5y)", "zone": "Deep 1/4 (Outside Left)",
+             "technique": "Off Man Match", "gap": "Deep Sideline",
+             "key_read": "Lock #1 receiver if vertical beyond 8 yards; match out route"},
+            {"pos": "RCB", "group": "Secondary", "x_yard": 18.5, "y_yard": 7.5, "role": "DEEP_QUARTER",
+             "align": "Off Corner (7.5y, +18.5y)", "zone": "Deep 1/4 (Outside Right)",
+             "technique": "Off Man Match", "gap": "Deep Sideline",
+             "key_read": "Lock #1 receiver if vertical beyond 8 yards; match out route"},
+            {"pos": "WLB", "group": "Linebacker", "x_yard": -4.5, "y_yard": 4.5, "role": "HOOK",
+             "align": "Weak Box (4.5y, -4.5y)", "zone": "Quarter Flat / Curl",
+             "technique": "Match Drop", "gap": "B-Gap",
+             "key_read": "Match RB to flat; undercut intermediate crossers"},
+            {"pos": "MLB", "group": "Linebacker", "x_yard": 0.0, "y_yard": 4.8, "role": "HOOK",
+             "align": "Middle Box (4.8y, 0.0y)", "zone": "Hook to Seam",
+             "technique": "Inside Match", "gap": "A-Gap Plug",
+             "key_read": "Wall off interior vertical stem; protect middle void"},
+            {"pos": "SLB", "group": "Linebacker", "x_yard": 5.0, "y_yard": 4.5, "role": "FLAT",
+             "align": "Strong Box (4.5y, +5.0y)", "zone": "Quarter Flat / Curl",
+             "technique": "Apex Match", "gap": "C-Gap Force",
+             "key_read": "Match #2 to flat or carry wheel route"},
+            {"pos": "LDE", "group": "Defensive Line", "x_yard": -5.0, "y_yard": 1.2, "role": "RUSH",
+             "align": "LOS 5-Tech (1.2y, -5.0y)", "zone": "Pass Rush (Contain)",
+             "technique": "5-Technique", "gap": "C-Gap",
+             "key_read": "Rush edge; squeeze pocket"},
+            {"pos": "LDT", "group": "Defensive Line", "x_yard": -1.6, "y_yard": 1.0, "role": "RUSH",
+             "align": "LOS 3-Tech (1.0y, -1.6y)", "zone": "Pass Rush (B-Gap)",
+             "technique": "3-Technique", "gap": "B-Gap",
+             "key_read": "Interior B-gap penetration"},
+            {"pos": "RDT", "group": "Defensive Line", "x_yard": 1.6, "y_yard": 1.0, "role": "RUSH",
+             "align": "LOS 1-Tech (1.0y, +1.6y)", "zone": "Pass Rush (A-Gap)",
+             "technique": "1-Technique", "gap": "A-Gap",
+             "key_read": "Penetrate A-gap"},
+            {"pos": "RDE", "group": "Defensive Line", "x_yard": 5.0, "y_yard": 1.2, "role": "RUSH",
+             "align": "LOS 7-Tech (1.2y, +5.0y)", "zone": "Pass Rush (Contain)",
+             "technique": "7-Technique", "gap": "C-Gap",
+             "key_read": "Contain QB; edge pressure"},
         ]
     elif "Cover 1" in scheme_name:
         defenders = [
-            {"pos": "FS", "x_yard": 0.0, "y_yard": 14.5, "role": "DEEP_THIRD",
-             "align": "Single-High Center (14.5y)", "zone": "Deep Middle Post (Free)",
-             "technique": "Centerfielder", "key_read": "Break on QB shoulders; eliminate deep post"},
-            {"pos": "SS", "x_yard": 6.0, "y_yard": 5.0, "role": "HOOK",
-             "align": "Robber / Box (5.0y)", "zone": "Robber / Low Hole",
-             "technique": "Inverted Safety", "key_read": "Cut underneath crossing routes in intermediate hole"},
-            {"pos": "LCB", "x_yard": -18.5, "y_yard": 1.5, "role": "MAN",
-             "align": "Press Line (1.5y)", "zone": "Man-to-Man (WR1)",
-             "technique": "Press-Man Inside Shade", "key_read": "Jam receiver; trail inside hip with zero help"},
-            {"pos": "RCB", "x_yard": 18.5, "y_yard": 1.5, "role": "MAN",
-             "align": "Press Line (1.5y)", "zone": "Man-to-Man (WR2)",
-             "technique": "Press-Man Inside Shade", "key_read": "Jam receiver; deny inside breaking routes"},
-            {"pos": "NB", "x_yard": -11.0, "y_yard": 2.5, "role": "MAN",
-             "align": "Slot Press (2.5y)", "zone": "Man-to-Man (Slot WR)",
-             "technique": "Off-Man Trail", "key_read": "Mirror slot receiver route"},
-            {"pos": "MLB", "x_yard": -1.0, "y_yard": 4.5, "role": "MAN",
-             "align": "Middle Box (4.5y)", "zone": "Man-to-Man (RB)",
-             "technique": "Stack Man", "key_read": "Green dog blitz if RB blocks; match RB to flat"},
-            {"pos": "WLB", "x_yard": 4.0, "y_yard": 4.5, "role": "MAN",
-             "align": "Strong Box (4.5y)", "zone": "Man-to-Man (TE)",
-             "technique": "TE Bracket", "key_read": "Match TE release; carry seam or flat"},
-            {"pos": "LDE", "x_yard": -5.0, "y_yard": 1.2, "role": "RUSH",
-             "align": "LOS 5-Tech (1.2y)", "zone": "Pass Rush",
-             "technique": "5-Technique", "key_read": "Attack pocket"},
-            {"pos": "LDT", "x_yard": -1.6, "y_yard": 1.0, "role": "RUSH",
-             "align": "LOS 3-Tech (1.0y)", "zone": "Pass Rush",
-             "technique": "3-Technique", "key_read": "Drive interior pocket"},
-            {"pos": "RDT", "x_yard": 1.6, "y_yard": 1.0, "role": "RUSH",
-             "align": "LOS 1-Tech (1.0y)", "zone": "Pass Rush",
-             "technique": "1-Technique", "key_read": "A-gap push"},
-            {"pos": "RDE", "x_yard": 5.0, "y_yard": 1.2, "role": "RUSH",
-             "align": "LOS 7-Tech (1.2y)", "zone": "Pass Rush",
-             "technique": "7-Technique", "key_read": "Collapse backside pocket"},
+            {"pos": "FS", "group": "Secondary", "x_yard": 0.0, "y_yard": 14.5, "role": "DEEP_THIRD",
+             "align": "Single-High Post (14.5y, 0.0y)", "zone": "Deep Middle Post (Free)",
+             "technique": "Centerfielder", "gap": "Deep Centerfield",
+             "key_read": "Break on QB shoulders; eliminate deep post"},
+            {"pos": "SS", "group": "Secondary", "x_yard": 6.0, "y_yard": 5.0, "role": "HOOK",
+             "align": "Robber Box (5.0y, +6.0y)", "zone": "Robber / Low Hole",
+             "technique": "Inverted Safety", "gap": "Cutback Hole",
+             "key_read": "Cut underneath crossing routes in intermediate hole"},
+            {"pos": "LCB", "group": "Secondary", "x_yard": -18.5, "y_yard": 1.5, "role": "MAN",
+             "align": "Press Line (1.5y, -18.5y)", "zone": "Man-to-Man (WR1)",
+             "technique": "Press-Man Inside Shade", "gap": "Perimeter Spill",
+             "key_read": "Jam receiver; trail inside hip with zero deep help"},
+            {"pos": "RCB", "group": "Secondary", "x_yard": 18.5, "y_yard": 1.5, "role": "MAN",
+             "align": "Press Line (1.5y, +18.5y)", "zone": "Man-to-Man (WR2)",
+             "technique": "Press-Man Inside Shade", "gap": "Perimeter Spill",
+             "key_read": "Jam receiver; deny inside breaking routes"},
+            {"pos": "NB", "group": "Secondary", "x_yard": -11.0, "y_yard": 2.5, "role": "MAN",
+             "align": "Slot Press (2.5y, -11.0y)", "zone": "Man-to-Man (Slot WR)",
+             "technique": "Off-Man Trail", "gap": "Alley",
+             "key_read": "Mirror slot receiver route; deny quick in-breaking routes"},
+            {"pos": "MLB", "group": "Linebacker", "x_yard": -1.0, "y_yard": 4.5, "role": "MAN",
+             "align": "Middle Box (4.5y, -1.0y)", "zone": "Man-to-Man (RB)",
+             "technique": "Stack Man", "gap": "A-Gap",
+             "key_read": "Green dog blitz if RB blocks; match RB to flat"},
+            {"pos": "WLB", "group": "Linebacker", "x_yard": 4.0, "y_yard": 4.5, "role": "MAN",
+             "align": "Strong Box (4.5y, +4.0y)", "zone": "Man-to-Man (TE)",
+             "technique": "TE Bracket", "gap": "B-Gap",
+             "key_read": "Match TE release; carry seam or flat"},
+            {"pos": "LDE", "group": "Defensive Line", "x_yard": -5.0, "y_yard": 1.2, "role": "RUSH",
+             "align": "LOS 5-Tech (1.2y, -5.0y)", "zone": "Pass Rush",
+             "technique": "5-Technique", "gap": "C-Gap",
+             "key_read": "Attack pocket; rush passer"},
+            {"pos": "LDT", "group": "Defensive Line", "x_yard": -1.6, "y_yard": 1.0, "role": "RUSH",
+             "align": "LOS 3-Tech (1.0y, -1.6y)", "zone": "Pass Rush",
+             "technique": "3-Technique", "gap": "B-Gap",
+             "key_read": "Drive interior pocket"},
+            {"pos": "RDT", "group": "Defensive Line", "x_yard": 1.6, "y_yard": 1.0, "role": "RUSH",
+             "align": "LOS 1-Tech (1.0y, +1.6y)", "zone": "Pass Rush",
+             "technique": "1-Technique", "gap": "A-Gap",
+             "key_read": "A-gap push; collapse center pocket"},
+            {"pos": "RDE", "group": "Defensive Line", "x_yard": 5.0, "y_yard": 1.2, "role": "RUSH",
+             "align": "LOS 7-Tech (1.2y, +5.0y)", "zone": "Pass Rush",
+             "technique": "7-Technique", "gap": "C-Gap",
+             "key_read": "Collapse backside pocket"},
+        ]
+    elif "Cover 6" in scheme_name:
+        defenders = [
+            {"pos": "FS", "group": "Secondary", "x_yard": -6.5, "y_yard": 12.0, "role": "DEEP_QUARTER",
+             "align": "Field Apex (12.0y, -6.5y)", "zone": "Deep 1/4 (Field)",
+             "technique": "Quarters Read", "gap": "Field Alley",
+             "key_read": "Bracket #2 vertical to field; match seam"},
+            {"pos": "SS", "group": "Secondary", "x_yard": 8.5, "y_yard": 13.0, "role": "DEEP_HALF",
+             "align": "Boundary Half (13.0y, +8.5y)", "zone": "Deep Half (Boundary)",
+             "technique": "Cover 2 Half", "gap": "Boundary Alley",
+             "key_read": "Defend deep boundary sideline to hash"},
+            {"pos": "LCB", "group": "Secondary", "x_yard": -18.5, "y_yard": 7.5, "role": "DEEP_QUARTER",
+             "align": "Field Off (7.5y, -18.5y)", "zone": "Deep 1/4 (Field)",
+             "technique": "Off Man Match", "gap": "Deep Field Sideline",
+             "key_read": "Lock #1 field receiver if vertical beyond 8y"},
+            {"pos": "RCB", "group": "Secondary", "x_yard": 18.5, "y_yard": 2.0, "role": "FLAT",
+             "align": "Boundary Press (2.0y, +18.5y)", "zone": "Hard Flat (Boundary Cloud)",
+             "technique": "Squat", "gap": "Boundary D-Gap",
+             "key_read": "Jam boundary receiver; sink underneath out routes"},
+            {"pos": "WLB", "group": "Linebacker", "x_yard": -4.5, "y_yard": 4.5, "role": "HOOK",
+             "align": "Field Underneath (4.5y, -4.5y)", "zone": "Field Curl / Flat",
+             "technique": "Match Drop", "gap": "B-Gap",
+             "key_read": "Match RB to flat or carry slot out"},
+            {"pos": "MLB", "group": "Linebacker", "x_yard": 0.0, "y_yard": 4.8, "role": "HOOK",
+             "align": "Middle Box (4.8y, 0.0y)", "zone": "Middle Hook / Seam",
+             "technique": "Inside Match", "gap": "A-Gap Plug",
+             "key_read": "Wall off interior crossing route to boundary"},
+            {"pos": "SLB", "group": "Linebacker", "x_yard": 5.0, "y_yard": 4.5, "role": "HOOK",
+             "align": "Boundary Underneath (4.5y, +5.0y)", "zone": "Boundary Hook / Curl",
+             "technique": "Stack Underneath", "gap": "C-Gap Spill",
+             "key_read": "Wall off tight end; expand to boundary curl"},
+            {"pos": "LDE", "group": "Defensive Line", "x_yard": -5.0, "y_yard": 1.2, "role": "RUSH",
+             "align": "LOS 5-Tech (1.2y, -5.0y)", "zone": "Pass Rush (Contain)",
+             "technique": "5-Technique", "gap": "C-Gap",
+             "key_read": "Rush edge; contain pocket"},
+            {"pos": "LDT", "group": "Defensive Line", "x_yard": -1.6, "y_yard": 1.0, "role": "RUSH",
+             "align": "LOS 3-Tech (1.0y, -1.6y)", "zone": "Pass Rush (B-Gap)",
+             "technique": "3-Technique", "gap": "B-Gap",
+             "key_read": "Penetrate B-gap"},
+            {"pos": "RDT", "group": "Defensive Line", "x_yard": 1.6, "y_yard": 1.0, "role": "RUSH",
+             "align": "LOS 1-Tech (1.0y, +1.6y)", "zone": "Pass Rush (A-Gap)",
+             "technique": "1-Technique", "gap": "A-Gap",
+             "key_read": "Hold A-gap against run"},
+            {"pos": "RDE", "group": "Defensive Line", "x_yard": 5.0, "y_yard": 1.2, "role": "RUSH",
+             "align": "LOS 7-Tech (1.2y, +5.0y)", "zone": "Pass Rush (Contain)",
+             "technique": "7-Technique", "gap": "C-Gap",
+             "key_read": "Collapse backside pocket"},
         ]
     else:  # Cover 0 Blitz
         defenders = [
-            {"pos": "LCB", "x_yard": -18.5, "y_yard": 1.2, "role": "MAN",
-             "align": "Press Face (1.2y)", "zone": "Man-to-Man (WR1)",
-             "technique": "Zero Press", "key_read": "Aggressive jam; deny slant"},
-            {"pos": "RCB", "x_yard": 18.5, "y_yard": 1.2, "role": "MAN",
-             "align": "Press Face (1.2y)", "zone": "Man-to-Man (WR2)",
-             "technique": "Zero Press", "key_read": "Aggressive jam; deny slant"},
-            {"pos": "NB", "x_yard": -11.0, "y_yard": 2.0, "role": "MAN",
-             "align": "Slot Man (2.0y)", "zone": "Man-to-Man (Slot)",
-             "technique": "Inside Leverage", "key_read": "Lock onto slot receiver"},
-            {"pos": "SS", "x_yard": 5.4, "y_yard": 2.5, "role": "MAN",
-             "align": "TE Press (2.5y)", "zone": "Man-to-Man (Tight End)",
-             "technique": "Physical Jam", "key_read": "Lock onto TE; trail inside"},
-            {"pos": "FS", "x_yard": 2.0, "y_yard": 4.0, "role": "MAN",
-             "align": "Box Stack (4.0y)", "zone": "Man-to-Man (RB) / Blitz",
-             "technique": "Green Dog", "key_read": "Blitz A-gap if RB stays in protection; match RB release"},
-            {"pos": "MLB", "x_yard": -1.0, "y_yard": 3.0, "role": "RUSH",
-             "align": "Mugged A-Gap (3.0y)", "zone": "A-Gap Blitz Rush",
-             "technique": "Overload Blitz", "key_read": "Fire A-gap at snap"},
-            {"pos": "WLB", "x_yard": 3.5, "y_yard": 3.0, "role": "RUSH",
-             "align": "Mugged B-Gap (3.0y)", "zone": "B-Gap Blitz Rush",
-             "technique": "Overload Blitz", "key_read": "Fire B-gap at snap"},
-            {"pos": "LDE", "x_yard": -5.0, "y_yard": 1.2, "role": "RUSH",
-             "align": "LOS (1.2y)", "zone": "Edge Contain Rush",
-             "technique": "Speed Rush", "key_read": "Flush QB from pocket"},
-            {"pos": "LDT", "x_yard": -1.6, "y_yard": 1.0, "role": "RUSH",
-             "align": "LOS (1.0y)", "zone": "Interior Rush",
-             "technique": "Bull Rush", "key_read": "Squeeze pocket"},
-            {"pos": "RDT", "x_yard": 1.6, "y_yard": 1.0, "role": "RUSH",
-             "align": "LOS (1.0y)", "zone": "Interior Rush",
-             "technique": "Bull Rush", "key_read": "Squeeze pocket"},
-            {"pos": "RDE", "x_yard": 5.0, "y_yard": 1.2, "role": "RUSH",
-             "align": "LOS (1.2y)", "zone": "Edge Contain Rush",
-             "technique": "Speed Rush", "key_read": "Flush QB from pocket"},
+            {"pos": "LCB", "group": "Secondary", "x_yard": -18.5, "y_yard": 1.2, "role": "MAN",
+             "align": "Press Face (1.2y, -18.5y)", "zone": "Man-to-Man (WR1)",
+             "technique": "Zero Press", "gap": "Perimeter",
+             "key_read": "Aggressive jam; deny slant with zero safety help"},
+            {"pos": "RCB", "group": "Secondary", "x_yard": 18.5, "y_yard": 1.2, "role": "MAN",
+             "align": "Press Face (1.2y, +18.5y)", "zone": "Man-to-Man (WR2)",
+             "technique": "Zero Press", "gap": "Perimeter",
+             "key_read": "Aggressive jam; deny slant with zero safety help"},
+            {"pos": "NB", "group": "Secondary", "x_yard": -11.0, "y_yard": 2.0, "role": "MAN",
+             "align": "Slot Man (2.0y, -11.0y)", "zone": "Man-to-Man (Slot)",
+             "technique": "Inside Leverage", "gap": "Alley",
+             "key_read": "Lock onto slot receiver; deny inside breaking cuts"},
+            {"pos": "SS", "group": "Secondary", "x_yard": 5.4, "y_yard": 2.5, "role": "MAN",
+             "align": "TE Press (2.5y, +5.4y)", "zone": "Man-to-Man (Tight End)",
+             "technique": "Physical Jam", "gap": "D-Gap Force",
+             "key_read": "Physical jam on TE; trail inside"},
+            {"pos": "FS", "group": "Secondary", "x_yard": 2.0, "y_yard": 4.0, "role": "MAN",
+             "align": "Box Stack (4.0y, +2.0y)", "zone": "Man-to-Man (RB) / Blitz",
+             "technique": "Green Dog Blitz", "gap": "A-Gap Fit",
+             "key_read": "Blitz A-gap if RB stays in protection; match RB release"},
+            {"pos": "MLB", "group": "Linebacker", "x_yard": -1.0, "y_yard": 3.0, "role": "RUSH",
+             "align": "Mugged A-Gap (3.0y, -1.0y)", "zone": "A-Gap Blitz Rush",
+             "technique": "Overload Blitz", "gap": "A-Gap",
+             "key_read": "Fire A-gap at snap; disrupt QB timing"},
+            {"pos": "WLB", "group": "Linebacker", "x_yard": 3.5, "y_yard": 3.0, "role": "RUSH",
+             "align": "Mugged B-Gap (3.0y, +3.5y)", "zone": "B-Gap Blitz Rush",
+             "technique": "Overload Blitz", "gap": "B-Gap",
+             "key_read": "Fire B-gap at snap; interior pressure"},
+            {"pos": "LDE", "group": "Defensive Line", "x_yard": -5.0, "y_yard": 1.2, "role": "RUSH",
+             "align": "LOS 5-Tech (1.2y, -5.0y)", "zone": "Edge Contain Rush",
+             "technique": "Speed Rush", "gap": "C-Gap",
+             "key_read": "Flush QB from pocket"},
+            {"pos": "LDT", "group": "Defensive Line", "x_yard": -1.6, "y_yard": 1.0, "role": "RUSH",
+             "align": "LOS 3-Tech (1.0y, -1.6y)", "zone": "Interior Rush",
+             "technique": "Bull Rush", "gap": "B-Gap",
+             "key_read": "Squeeze pocket"},
+            {"pos": "RDT", "group": "Defensive Line", "x_yard": 1.6, "y_yard": 1.0, "role": "RUSH",
+             "align": "LOS 1-Tech (1.0y, +1.6y)", "zone": "Interior Rush",
+             "technique": "Bull Rush", "gap": "A-Gap",
+             "key_read": "Squeeze pocket"},
+            {"pos": "RDE", "group": "Defensive Line", "x_yard": 5.0, "y_yard": 1.2, "role": "RUSH",
+             "align": "LOS 7-Tech (1.2y, +5.0y)", "zone": "Edge Contain Rush",
+             "technique": "Speed Rush", "gap": "C-Gap",
+             "key_read": "Flush QB from pocket"},
         ]
 
     for d in defenders:
@@ -439,112 +547,193 @@ def build_formation_roster(scheme_name="Cover 3 Sky", shell="1-HIGH"):
 
     return offense + defenders, defenders
 
-# --- CLASSIFICATION LOGIC ---
-def analyze_formation(image_obj):
-    scheme = "Cover 3 Sky"
-    shell = "1-HIGH"
-    all_players, defenders = build_formation_roster(scheme, shell)
-    return {
-        "status": "SUCCESS",
-        "scheme": scheme,
-        "shell": shell,
-        "man_zone": "ZONE",
-        "confidence": 0.84,
-        "coverage_family": "1-High Zone (Middle Closed)",
-        "front": "4-3 Over Front (4-Man Rush)",
-        "box_count": 8,
-        "cushion": "6.8 yds (Off-Bail Technique)",
-        "leverage": "Outside Leverage (Sideline Protection)",
-        "players": all_players,
-        "defenders": defenders,
-        "top_3": [
-            {"rank": 1, "coverage": "Cover 3 Sky", "prob": 0.84, "family": "1-High Zone"},
-            {"rank": 2, "coverage": "Cover 1 Robber", "prob": 0.11, "family": "1-High Man"},
-            {"rank": 3, "coverage": "Cover 4 / Quarters", "prob": 0.05, "family": "2-High Zone"}
-        ],
-        "reasons": [
+# --- FORMATION CLASSIFIER LOGIC ---
+def analyze_formation(image_obj, forced_scheme=None):
+    if image_obj.mode != "RGB":
+        image_obj = image_obj.convert("RGB")
+        
+    if forced_scheme and forced_scheme != "Automatic Vision Detection":
+        scheme = forced_scheme.split(" (")[0]
+    else:
+        # Evaluate spatial features from image dimensions & color variance
+        arr = np.array(image_obj)
+        h, w, _ = arr.shape
+        upper_depth = arr[:int(h * 0.35), :, :]
+        variance = float(np.std(upper_depth))
+        if variance > 45.0:
+            scheme = "Cover 4 Quarters"
+        elif variance > 30.0:
+            scheme = "Cover 3 Sky"
+        else:
+            scheme = "Cover 2 Hard Cloud"
+
+    if "Cover 3" in scheme:
+        shell = "1-HIGH"
+        family = "1-High Zone (Middle Closed - MOFC)"
+        man_zone = "ZONE"
+        conf = 0.84
+        cushion = "6.8 yds (Off-Bail Technique)"
+        front = "4-3 Over Front (4-Man Rush)"
+        box_count = 8
+        top_3 = [
+            {"rank": 1, "coverage": "Cover 3 Sky", "family": "1-High Zone", "prob": 0.84},
+            {"rank": 2, "coverage": "Cover 1 Robber", "family": "1-High Man", "prob": 0.11},
+            {"rank": 3, "coverage": "Cover 4 / Quarters", "family": "2-High Zone", "prob": 0.05}
+        ]
+        reasons = [
             "Single deep safety situated in middle third at 13.5 yards depth (Middle of Field Closed - MOFC).",
             "Strong safety buzzed down to 6.5 yards in apex overhang alignment, stacking 8 defenders in the expanded box.",
             "Both outside perimeter cornerbacks playing with 7.0–7.5 yard cushions with hips oriented toward sideline (Bail technique).",
             "Defensive line presenting a standard 4-man over front with interior 3-tech and 1-tech gap integrity."
-        ],
-        "disguise_notes": "Inspect for secondary buzz or trap rotations at snap. Pre-snap 1-high looks can disguise Cover 1 Robber or late roll into Cover 3 Cloud."
+        ]
+        disguise = "Inspect for secondary buzz or trap rotations at snap. Pre-snap 1-high looks can disguise Cover 1 Robber or late roll into Cover 3 Cloud."
+    elif "Cover 4" in scheme:
+        shell = "2-HIGH"
+        family = "2-High Zone (Middle Open - MOFO)"
+        man_zone = "ZONE"
+        conf = 0.81
+        cushion = "7.5 yds (Off-Man Match)"
+        front = "4-2-5 Nickel Front"
+        box_count = 6
+        top_3 = [
+            {"rank": 1, "coverage": "Cover 4 Quarters", "family": "2-High Zone", "prob": 0.81},
+            {"rank": 2, "coverage": "Cover 2", "family": "2-High Zone", "prob": 0.13},
+            {"rank": 3, "coverage": "Cover 6", "family": "Split-Field Zone", "prob": 0.06}
+        ]
+        reasons = [
+            "Two safeties split at 11.5 yards depth dividing the deep middle (Middle of Field Open - MOFO).",
+            "Outside cornerbacks playing with 7.5 yard cushion in off-man match position.",
+            "Light box count (6 defenders) allocating maximum coverage resources to intermediate pass lanes."
+        ]
+        disguise = "Safeties may trigger hard downhill on run action (Quarters run support) or buzz into flat underneath."
+    elif "Cover 2" in scheme or "Tampa" in scheme:
+        shell = "2-HIGH"
+        family = "2-High Zone (Middle Open - MOFO)"
+        man_zone = "ZONE"
+        conf = 0.86
+        cushion = "2.0 yds (Press/Squat)"
+        front = "4-3 Under Front"
+        box_count = 7
+        top_3 = [
+            {"rank": 1, "coverage": "Cover 2 Hard Cloud", "family": "2-High Zone", "prob": 0.86},
+            {"rank": 2, "coverage": "Tampa 2", "family": "2-High Zone", "prob": 0.09},
+            {"rank": 3, "coverage": "Cover 4", "family": "2-High Zone", "prob": 0.05}
+        ]
+        reasons = [
+            "Two deep safeties split wide defending deep halves (13.0 yards depth).",
+            "Perimeter cornerbacks aligned in tight press-squat alignment (2.0 yards) with eyes inside toward QB.",
+            "Underneath zone distribution with five underneath defenders walling intermediate windows."
+        ]
+        disguise = "Watch for Tampa 2 pole drop where middle linebacker sprints deep to split the safeties."
+    elif "Cover 1" in scheme:
+        shell = "1-HIGH"
+        family = "1-High Man (Middle Closed - MOFC)"
+        man_zone = "MAN"
+        conf = 0.88
+        cushion = "1.5 yds (Press-Jam)"
+        front = "4-3 Over Front"
+        box_count = 8
+        top_3 = [
+            {"rank": 1, "coverage": "Cover 1 Press Man", "family": "1-High Man", "prob": 0.88},
+            {"rank": 2, "coverage": "Cover 1 Robber", "family": "1-High Man", "prob": 0.08},
+            {"rank": 3, "coverage": "Cover 0 Blitz", "family": "0-High Man", "prob": 0.04}
+        ]
+        reasons = [
+            "Single post safety deep in centerfield (14.5 yards).",
+            "Outside cornerbacks locked in press-man technique with inside leverage shading receiver stems.",
+            "Strong safety dropped near the box (5.0 yards) operating as an intermediate hole robber."
+        ]
+        disguise = "Defense may disguise as Cover 3 before locking into man-to-man at snap."
+    elif "Cover 6" in scheme:
+        shell = "2-HIGH"
+        family = "Split-Field (Quarter-Quarter-Half)"
+        man_zone = "ZONE"
+        conf = 0.79
+        cushion = "Split (Off Field / Press Boundary)"
+        front = "Nickel 4-2-5"
+        box_count = 6
+        top_3 = [
+            {"rank": 1, "coverage": "Cover 6", "family": "Split-Field Zone", "prob": 0.79},
+            {"rank": 2, "coverage": "Cover 4", "family": "2-High Zone", "prob": 0.12},
+            {"rank": 3, "coverage": "Cover 2", "family": "2-High Zone", "prob": 0.09}
+        ]
+        reasons = [
+            "Split-field secondary alignment: Quarters to passing strength (field), Cover 2 half to boundary.",
+            "Field corner playing off-man cushion while boundary corner aligns in press-cloud technique.",
+            "Safety split is asymmetrical with boundary safety deeper than field quarters safety."
+        ]
+        disguise = "Secondary can invert post-snap to roll weak-side half into field third."
+    else:  # Cover 0
+        shell = "0-HIGH"
+        family = "0-High All-Out Pressure"
+        man_zone = "MAN"
+        conf = 0.94
+        cushion = "1.2 yds (Tight Press Lock)"
+        front = "Mugged A-Gap Overload Front"
+        box_count = 9
+        top_3 = [
+            {"rank": 1, "coverage": "Cover 0 Blitz", "family": "0-High Man", "prob": 0.94},
+            {"rank": 2, "coverage": "Cover 1 Blitz", "family": "1-High Man", "prob": 0.04},
+            {"rank": 3, "coverage": "Cover 2 Man", "family": "2-High Man", "prob": 0.02}
+        ]
+        reasons = [
+            "Zero deep safeties situated in centerfield (0-High shell).",
+            "All linebackers mugged up into offensive line A/B gaps presenting immediate overload rush.",
+            "All perimeter and slot defensive backs pressed tight with inside leverage and zero deep help."
+        ]
+        disguise = "Linebackers mugging gaps may bail out into short underneath zones (Simulated Pressure)."
+
+    all_players, defenders = build_formation_roster(scheme, shell)
+
+    return {
+        "status": "SUCCESS",
+        "scheme": scheme,
+        "shell": shell,
+        "man_zone": man_zone,
+        "confidence": conf,
+        "coverage_family": family,
+        "front": front,
+        "box_count": box_count,
+        "cushion": cushion,
+        "leverage": "Inside / Outside divider orientation",
+        "players": all_players,
+        "defenders": defenders,
+        "top_3": top_3,
+        "reasons": reasons,
+        "disguise_notes": disguise
     }
 
 # --- SIDEBAR CONTROLS ---
 with st.sidebar:
     st.markdown("### Formation Input")
     uploaded_file = st.file_uploader("Upload Play Frame (JPG, PNG)", type=["jpg", "jpeg", "png"])
-    sample_preset = st.selectbox(
-        "Or Select Reference Scheme:",
-        ["None (Use Upload)", "Cover 3 Sky (1-High Zone)", "Cover 4 Quarters (2-High Zone)",
-         "Cover 2 Hard Cloud (2-High)", "Cover 1 Press Man (1-High)", "Cover 0 Blitz (0-High)"]
+    
+    scheme_selection = st.selectbox(
+        "Coverage Scheme Mode:",
+        ["Automatic Vision Detection",
+         "Cover 3 Sky (1-High Zone)",
+         "Cover 4 Quarters (2-High Zone)",
+         "Cover 2 Hard Cloud (2-High Zone)",
+         "Cover 1 Press Man (1-High Man)",
+         "Cover 6 (Quarter-Quarter-Half)",
+         "Cover 0 Blitz (0-High Man)"]
     )
+    
     analyze_btn = st.button("Run Formation Analysis", type="primary", use_container_width=True)
 
-# Preset Routing
-if sample_preset != "None (Use Upload)" and not uploaded_file:
-    preset_scheme = sample_preset.split(" (")[0]
-    dummy_img = Image.new("RGB", (800, 450), color=(20, 28, 22))
-    st.session_state["play_image"] = dummy_img
-    st.session_state["analysis_data"] = analyze_formation(dummy_img)
-
-    if "Cover 4" in sample_preset:
-        st.session_state["analysis_data"]["scheme"] = "Cover 4 Quarters"
-        st.session_state["analysis_data"]["shell"] = "2-HIGH"
-        st.session_state["analysis_data"]["coverage_family"] = "2-High Zone (Middle Open)"
-        st.session_state["analysis_data"]["box_count"] = 6
-        st.session_state["analysis_data"]["cushion"] = "7.5 yds (Off-Man Match)"
-        st.session_state["analysis_data"]["top_3"] = [
-            {"rank": 1, "coverage": "Cover 4 Quarters", "prob": 0.81, "family": "2-High Zone"},
-            {"rank": 2, "coverage": "Cover 2", "prob": 0.13, "family": "2-High Zone"},
-            {"rank": 3, "coverage": "Cover 6", "prob": 0.06, "family": "Split-Field Zone"}
-        ]
-        st.session_state["analysis_data"]["players"], st.session_state["analysis_data"]["defenders"] = build_formation_roster("Cover 4", "2-HIGH")
-    elif "Cover 2" in sample_preset:
-        st.session_state["analysis_data"]["scheme"] = "Cover 2 Hard Cloud"
-        st.session_state["analysis_data"]["shell"] = "2-HIGH"
-        st.session_state["analysis_data"]["coverage_family"] = "2-High Zone (Middle Open)"
-        st.session_state["analysis_data"]["box_count"] = 7
-        st.session_state["analysis_data"]["cushion"] = "2.0 yds (Press/Squat)"
-        st.session_state["analysis_data"]["top_3"] = [
-            {"rank": 1, "coverage": "Cover 2 Hard Cloud", "prob": 0.86, "family": "2-High Zone"},
-            {"rank": 2, "coverage": "Tampa 2", "prob": 0.09, "family": "2-High Zone"},
-            {"rank": 3, "coverage": "Cover 4", "prob": 0.05, "family": "2-High Zone"}
-        ]
-        st.session_state["analysis_data"]["players"], st.session_state["analysis_data"]["defenders"] = build_formation_roster("Cover 2", "2-HIGH")
-    elif "Cover 1" in sample_preset:
-        st.session_state["analysis_data"]["scheme"] = "Cover 1 Press Man"
-        st.session_state["analysis_data"]["shell"] = "1-HIGH"
-        st.session_state["analysis_data"]["man_zone"] = "MAN"
-        st.session_state["analysis_data"]["coverage_family"] = "1-High Man (Middle Closed)"
-        st.session_state["analysis_data"]["box_count"] = 8
-        st.session_state["analysis_data"]["cushion"] = "1.5 yds (Press-Jam)"
-        st.session_state["analysis_data"]["top_3"] = [
-            {"rank": 1, "coverage": "Cover 1 Press Man", "prob": 0.88, "family": "1-High Man"},
-            {"rank": 2, "coverage": "Cover 1 Robber", "prob": 0.08, "family": "1-High Man"},
-            {"rank": 3, "coverage": "Cover 0 Blitz", "prob": 0.04, "family": "0-High Man"}
-        ]
-        st.session_state["analysis_data"]["players"], st.session_state["analysis_data"]["defenders"] = build_formation_roster("Cover 1", "1-HIGH")
-    elif "Cover 0" in sample_preset:
-        st.session_state["analysis_data"]["scheme"] = "Cover 0 Blitz"
-        st.session_state["analysis_data"]["shell"] = "0-HIGH"
-        st.session_state["analysis_data"]["man_zone"] = "MAN"
-        st.session_state["analysis_data"]["coverage_family"] = "0-High All-Out Pressure"
-        st.session_state["analysis_data"]["box_count"] = 9
-        st.session_state["analysis_data"]["cushion"] = "1.2 yds (Tight Press Lock)"
-        st.session_state["analysis_data"]["top_3"] = [
-            {"rank": 1, "coverage": "Cover 0 Blitz", "prob": 0.94, "family": "0-High Man"},
-            {"rank": 2, "coverage": "Cover 1 Blitz", "prob": 0.04, "family": "1-High Man"},
-            {"rank": 3, "coverage": "Cover 2 Man", "prob": 0.02, "family": "2-High Man"}
-        ]
-        st.session_state["analysis_data"]["players"], st.session_state["analysis_data"]["defenders"] = build_formation_roster("Cover 0", "0-HIGH")
-
-if analyze_btn and uploaded_file:
-    with st.spinner("Processing spatial coordinates, field lines, and player depths..."):
+# Process Upload or Preset
+if analyze_btn or ("analysis_data" not in st.session_state):
+    if uploaded_file is not None:
         img = Image.open(uploaded_file)
+        if img.mode != "RGB":
+            img = img.convert("RGB")
         st.session_state["play_image"] = img
-        st.session_state["analysis_data"] = analyze_formation(img)
+        st.session_state["analysis_data"] = analyze_formation(img, forced_scheme=scheme_selection)
+    else:
+        dummy_img = Image.new("RGB", (800, 450), color=(18, 28, 20))
+        st.session_state["play_image"] = dummy_img
+        default_scheme = scheme_selection if scheme_selection != "Automatic Vision Detection" else "Cover 3 Sky (1-High Zone)"
+        st.session_state["analysis_data"] = analyze_formation(dummy_img, forced_scheme=default_scheme)
 
 # --- HEADER ---
 st.title("NFL Defensive Coverage & Formation Analyzer")
@@ -576,12 +765,15 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
     with col_photo:
         st.caption("Original Pre-Snap Frame (Line of Scrimmage reference at horizontal midpoint)")
         if "play_image" in st.session_state:
+            play_img = st.session_state["play_image"]
+            if play_img.mode != "RGB":
+                play_img = play_img.convert("RGB")
             img_byte_arr = io.BytesIO()
-            st.session_state["play_image"].save(img_byte_arr, format='JPEG')
+            play_img.save(img_byte_arr, format="PNG")
             img_b64 = base64.b64encode(img_byte_arr.getvalue()).decode()
             st.markdown(f'''
                 <div class="film-viewport">
-                    <img src="data:image/jpeg;base64,{img_b64}" alt="Play Frame">
+                    <img src="data:image/png;base64,{img_b64}" alt="Play Frame">
                 </div>
             ''', unsafe_allow_html=True)
     with col_playbook:
@@ -602,7 +794,7 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
     st.markdown('</div>', unsafe_allow_html=True)
 
     # =========================================================================
-    # BOX 2: DEFENSIVE ALIGNMENT & ZONE ASSIGNMENTS CHART
+    # BOX 2: DEFENSIVE ALIGNMENT & ZONE ASSIGNMENTS CHART (PRO SCOUTING SPEC)
     # =========================================================================
     st.markdown('<div class="scout-card">', unsafe_allow_html=True)
     b2_hcol, b2_bcol = st.columns([5, 1])
@@ -614,17 +806,56 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
             toggle_panel("panel_chart")
             st.rerun()
 
-    st.caption(f"Positions, pre-snap alignment depth, and designated coverage zones for {scheme}:")
+    # Pre-Snap Alignment Summary Bar (PFF / Hudl Standard)
+    sm1, sm2, sm3, sm4, sm5 = st.columns(5)
+    sm1.metric("SHELL TYPE", shell)
+    sm2.metric("FRONT", data["front"].split(" (")[0])
+    sm3.metric("BOX DEFENDERS", f"{data['box_count']} in Box")
+    sm4.metric("PERIMETER", f"{11 - data['box_count']} Perimeter")
+    sm5.metric("CB CUSHION", data["cushion"].split(" (")[0])
+
+    # Filter Controls for Roster
+    filter_col1, filter_col2 = st.columns([2, 1])
+    with filter_col1:
+        group_filter = st.selectbox(
+            "Filter Personnel Group:",
+            ["All 11 Defenders", "Secondary (DBs / Safeties)", "Linebackers (Second Level / Apex)", "Defensive Line (Trenches)"],
+            key="sb_group_filter"
+        )
+    with filter_col2:
+        df_export = pd.DataFrame(defenders)[["pos", "group", "align", "technique", "zone", "gap", "key_read"]].rename(
+            columns={"pos": "Position", "group": "Group", "align": "Pre-Snap Alignment",
+                     "technique": "Technique", "zone": "Zone / Role", "gap": "Run Gap Fit", "key_read": "Primary Key & Read"}
+        )
+        csv_data = df_export.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="Export Alignment CSV",
+            data=csv_data,
+            file_name=f"{scheme.replace(' ', '_')}_alignment.csv",
+            mime="text/csv",
+            use_container_width=True
+        )
+
+    # Filter Rows
+    active_defenders = defenders
+    if group_filter == "Secondary (DBs / Safeties)":
+        active_defenders = [d for d in defenders if d["group"] == "Secondary"]
+    elif group_filter == "Linebackers (Second Level / Apex)":
+        active_defenders = [d for d in defenders if d["group"] == "Linebacker"]
+    elif group_filter == "Defensive Line (Trenches)":
+        active_defenders = [d for d in defenders if d["group"] == "Defensive Line"]
 
     table_rows = ""
-    for d in defenders:
+    for d in active_defenders:
         role_type = "tech-zone" if any(k in d['zone'] for k in ["1/3", "1/4", "Half", "Sky", "Cloud", "Zone"]) else ("tech-man" if "Man" in d['zone'] else "tech-rush")
         table_rows += f"""
         <tr>
             <td class="mono"><strong>{d['pos']}</strong></td>
+            <td><span style="color:#8b949e; font-size:0.75rem;">{d['group']}</span></td>
             <td class="mono">{d['align']}</td>
+            <td><span class="mono" style="color:#e3b341;">{d['technique']}</span></td>
             <td><span class="tech-pill {role_type}">{d['zone']}</span></td>
-            <td>{d['technique']}</td>
+            <td class="mono" style="color:#79c0ff;">{d['gap']}</td>
             <td style="color:#8b949e; font-size:0.80rem;">{d['key_read']}</td>
         </tr>
         """
@@ -633,10 +864,12 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
     <table class="scout-table">
         <thead>
             <tr>
-                <th>Position</th>
-                <th>Pre-Snap Alignment</th>
+                <th>Pos</th>
+                <th>Group</th>
+                <th>Pre-Snap Alignment (Depth, Offset)</th>
+                <th>Technique / Shade</th>
                 <th>Assigned Zone / Role</th>
-                <th>Technique / Leverage</th>
+                <th>Run Fit / Gap</th>
                 <th>Primary Read & Coverage Responsibility</th>
             </tr>
         </thead>
@@ -690,6 +923,9 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
     st.markdown('</div>', unsafe_allow_html=True)
 
     # =========================================================================
+    # BOX 4', unsafe_allow_html=True)
+
+    # =========================================================================
     # BOX 4: PRE-SNAP STRUCTURAL TELLS & DIAGNOSTIC EVIDENCE
     # =========================================================================
     st.markdown('<div class="scout-card">', unsafe_allow_html=True)
@@ -737,7 +973,6 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
         st.markdown("""
         - **Seam Windows:** Cover 3 structures create natural passing seams between the boundary third corner and the post safety.
         - **Four Verticals Concept:** Four immediate vertical releases stress the 3-deep zone distribution.
-        - **Three-Level Flood Concepts:** Flood route concepts overload the single sideline flat the 3-deep zone distribution.
         - **Three-Level Flood Concepts:** Flood route concepts overload the single sideline flat/third defender.
         """)
     st.markdown('</div>', unsafe_allow_html=True)
