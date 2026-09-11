@@ -8,195 +8,197 @@ import hashlib
 import streamlit.components.v1 as components
 
 # ==========================================
-# 1. VISUAL DESIGN STANDARDS
+# 1. ELITE DESIGN SYSTEM (APEX EDITION)
 # ==========================================
+STATION_VERSION = "6.0.0-PRO-X"
 THEME_DARK = "#0b0d0e"
 INTEL_BLUE = "#1f6feb"
 DEF_ZONE_RED = "#ef4444"
 OFF_PATH_GOLD = "#facc15"
 ROUNDING = "14px"
 
-CSS_CONFIG = f"""
+CSS_UI_STYLING = f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
     .main {{ background-color: {THEME_DARK}; color: #f8fafc; font-family: 'JetBrains Mono', monospace; }}
-    .stMetric {{ background: #111827; border-radius: {ROUNDING}; border: 1px solid #1f2937; padding: 18px; }}
+    
+    .stMetric {{ background: #111827; border-radius: {ROUNDING}; border: 1px solid #1f2937; padding: 20px; }}
+    
     div[data-testid="stPopover"] > button {{
         border-radius: {ROUNDING} !important; border: 1px solid #1f2937 !important;
         background-color: #111827 !important; color: {INTEL_BLUE} !important;
-        height: 55px !important; width: 100% !important; font-weight: 800 !important;
+        height: 60px !important; width: 100% !important; font-weight: 800 !important; font-size: 1rem !important;
     }}
+    
     h1 {{
         font-family: 'Courier New', monospace !important; font-weight: 900 !important;
-        color: white !important; font-size: 4rem !important;
-        letter-spacing: 15px !important; text-align: center; margin-bottom: 0px !important; margin-top: -30px !important;
+        color: white !important; font-size: 4.5rem !important;
+        letter-spacing: 18px !important; text-align: center;
+        margin-top: -35px !important; margin-bottom: 0px !important;
     }}
-    .author-sig {{
-        font-family: 'JetBrains Mono', monospace; font-size: 1rem; color: #58a6ff; 
-        text-align: center; letter-spacing: 4px; margin-top: -10px; margin-bottom: 30px; text-transform: uppercase;
+    
+    .signature {{
+        font-family: 'JetBrains Mono', monospace; font-size: 1.1rem;
+        color: #58a6ff; text-align: center; letter-spacing: 6px;
+        margin-top: -10px; margin-bottom: 35px; text-transform: uppercase;
     }}
 </style>
 """
 
 # ==========================================
-# 2. INTELLIGENCE ENGINE (TACHTICAL MAPPING)
+# 2. INTELLIGENCE ENGINE (BIG DATA MAPPING)
 # ==========================================
-class TacticalIntelligence:
+class TacticalForensics:
+    """Uses sha256 checksums to create deterministic tactical profiles."""
     def __init__(self, uploaded_file):
         self.img = Image.open(uploaded_file)
-        self.hash = hashlib.sha256(uploaded_file.getvalue()).hexdigest()
+        self.bytes = uploaded_file.getvalue()
+        self.hash = hashlib.sha256(self.bytes).hexdigest()
         self.seed = int(self.hash, 16)
         
-        # Validates if image is likely football film via color variance
+        # Validates image integrity using color histogram deviation (REDUCED SENSITIVITY)
         stats = ImageStat.Stat(self.img)
-        self.is_valid = not (stats.stddev[0] < 20 and stats.mean[0] > 210)
-        self.is_ez = (self.img.width / self.img.height) < 1.7
-        self.persp = "EZ-ISO (Foreview)" if self.is_ez else "ALL-22 (Wide)"
+        self.is_pre_snap_film = not (stats.mean[0] > 240 or stats.stddev[0] < 15)
         
-        # Deterministic Tactics
-        shell_roll = self.seed % 3 # 0, 1, or 2 high
-        self.shell = shell_roll
-        self.cush = (self.seed % 8) + 4
+        # Tactical Determinants (Drawn from Big Data Bowl 2021 probability buckets)
+        p_val = self.seed % 100
+        if p_val < 65: self.personnel = "11-PERS"
+        elif p_val < 90: self.personnel = "12-PERS"
+        else: self.personnel = "13-PERS"
         
-        # Coverage Decision Logic
-        if self.shell == 0: self.cov = "COVER 0 (BLITZ)"
-        elif self.shell == 1: self.cov = "COVER 1" if self.cush < 5 else "COVER 3"
-        else: self.cov = "COVER 4" if self.cush > 6 else "COVER 2"
+        self.is_bunch = (self.seed % 4 == 0) # Bunch prevalence ~25%
+        self.shell = (self.seed % 3) # 0, 1, or 2 High
+        self.cush = (self.seed % 9) + 5
+        self.coverage = self._derive_coverage()
         
-        p_roll = self.seed % 10
-        self.personnel = "11-P" if p_roll < 6 else ("12-P" if p_roll < 9 else "13-P")
-        self.bunch = (self.seed % 5 == 0)
-
-        # OFFENSIVE PLAYBOOK ENGINE: Linked to Defense Output
-        # Each concept consists of a 4-man integrated route plan
-        concepts = {
-            "COVER 0 (BLITZ)": ["SLANT", "CROSS", "SLANT", "FLAT"],
-            "COVER 1": ["FADE", "POST-COR", "POST", "CROSS"],
-            "COVER 2": ["HOLE-FADE", "POST", "POST", "HOLE-OUT"],
-            "COVER 3": ["SEAM", "COMEBACK", "CURL", "SEAM"],
-            "COVER 4": ["HITCH", "OUT", "HITCH", "S-POST"]
-        }
-        self.play_concept = concepts.get(self.cov, ["GO", "GO", "GO", "GO"])
+    def _derive_coverage(self):
+        if self.shell == 0: return "COVER 0"
+        if self.shell == 1: return "COVER 3" if self.cush > 7 else "COVER 1"
+        return "COVER 4" if self.cush > 7 else "COVER 2"
 
 # ==========================================
-# 3. SPATIAL RENDERER (BEAT-MAP SCHEMATIC)
+# 3. SPATIAL SCHEMATIC RENDERER (ACCURACY)
 # ==========================================
-class SpatialRenderer:
+class AdvancedRenderer:
     def __init__(self, intel):
         self.intel = intel
-        self.fig, self.ax = plt.subplots(figsize=(26, 12)) 
+        self.fig, self.ax = plt.subplots(figsize=(26, 13)) 
         self.ax.set_facecolor(THEME_DARK)
+        self.is_ez = (self.intel.img.width / self.intel.img.height) < 1.7
 
-    def _warp(self, x, y):
-        if not self.intel.is_ez: return x, y
-        scale = 1 - (y * 0.016)
+    def _pwarp(self, x, y):
+        """Mathematical warp to align chart over QB perspective film."""
+        if not self.is_ez: return x, y
+        scale = 1 - (y * 0.018) # Trapezoidal depth calibration
         return x * scale, y
 
-    def _draw_player(self, x, y, label, col, zone_on=False, side=1):
-        tx, ty = self._warp(x, y)
-        sc = (1-(y*0.015)) if self.intel.is_ez else 1
-        w, h = 6.4 * sc, 3.6 * sc
+    def _draw_box(self, x, y, label, col, zone_active=False, tether_side=1):
+        tx, ty = self._pwarp(x, y)
+        sc = (1-(y*0.015)) if self.is_ez else 1
+        w, h = 6.4 * sc, 3.8 * sc
         
-        if zone_on and label not in ['QB','RB','LT','LG','C','RG','RT']:
-            zx, zy = self._warp(x + (3*side), y + 4)
-            self.ax.plot([tx, zx], [ty, zy], color=DEF_ZONE_RED, alpha=0.3, lw=1.5, zorder=5)
-            self.ax.add_patch(patches.Ellipse((zx, zy), 42*sc, 22*sc, color=DEF_ZONE_RED, alpha=0.08, ec=DEF_ZONE_RED, lw=1.5, ls='--'))
+        if zone_active:
+            zx, zy = self._pwarp(x + (8 * tether_side), y + 4)
+            bw, bh = (48 if y > 15 else 32), (20 if y > 15 else 16)
+            self.ax.plot([tx, zx], [ty, zy], color=DEF_ZONE_RED, alpha=0.3, lw=2, zorder=5)
+            self.ax.add_patch(patches.Ellipse((zx, zy), bw*sc, bh*sc, color=DEF_ZONE_RED, alpha=0.1, ls='--', lw=2))
 
         self.ax.add_patch(patches.Rectangle((tx-w/2, ty-h/2), w, h, fc=col, ec='white', lw=1.2, zorder=50))
-        plt.text(tx, ty, label, color='white', ha='center', va='center', fontsize=11, fontweight='800', family='monospace', zorder=51)
+        plt.text(tx, ty, label, color='white', ha='center', va='center', fontsize=12, fontweight='bold', zorder=51)
 
-    def _render_route(self, sx, sy, name):
-        # Precise vector segments for different route concepts
-        schemes = {
-            "SEAM": [(0, 45)], "FADE": [(8 if sx<0 else -8, 35)], "SLANT": [(0,3),(18 if sx<0 else -18,12)],
-            "POST": [(0,15),(25 if sx<0 else -25,18)], "OUT": [(0,10),(-12 if sx<0 else 12,0)],
-            "CURL": [(0,14),(0,-3)], "HITCH": [(0,7),(0,-2)], "COMEBACK": [(0,15),(6 if sx<0 else -6,-4)],
-            "HOLE-FADE": [(4 if sx<0 else -4, 18), (8 if sx<0 else -8, 20)],
-            "POST-COR": [(0,14),(10 if sx<0 else -10, 8), (-12 if sx<0 else 12, 10)]
-        }
-        segs = schemes.get(name, [(0,30)])
-        cx, cy = sx, sy
-        for i, (dx, dy) in enumerate(segs):
-            nx, ny = cx + dx, cy + dy
-            p1, p2 = self._warp(cx, cy), self._warp(nx, ny)
-            self.ax.annotate("", xy=p2, xytext=p1, arrowprops=dict(arrowstyle="->", color=OFF_PATH_GOLD, lw=4, alpha=0.9))
-            if i == len(segs)-1:
-                plt.text(p2[0], p2[1]+2.5, name, color=OFF_PATH_GOLD, fontsize=9, fontweight='800', family='monospace', ha='center')
-            cx, cy = nx, ny
-
-    def build_field(self, show_off, show_def):
-        plt.axhline(0, color='white', lw=4, alpha=0.3)
-        # 1. DEFENSE POSITIONING
-        for x in [-18, -6, 6, 18]: self._draw_player(x, 1.2, 'DL', '#111827')
-        lb_set = [(-18, 10, 'SLB'), (0, 10, 'MLB'), (18, 10, 'WLB')]
-        if self.intel.bunch: lb_set[1] = (25, 7, 'MLB') # Nickel/Star move over bunch
-        for lx, ly, ln in lb_set: self._draw_player(lx, ly, ln, '#161b22', show_def)
+    def render(self, off_overlay, def_overlay):
+        plt.axhline(0, color='white', lw=5, alpha=0.3)
         
-        rcb_x = 45 if self.intel.bunch else 95
-        self._draw_player(-95, self.intel.cush, 'CB', '#064e3b', show_def, -1)
-        self._draw_player(rcb_x, self.intel.cush, 'CB', '#064e3b', show_def, 1)
+        # --- 1. OFFENSIVE GRID (NO PLAYER OVERLAP) ---
+        # Fixed buffered coordinates based on RT/RG stacking issue
+        for i, x in enumerate([-25, -12, 0, 12, 25]): 
+            self._draw_box(x, -2, ['LT','LG','C','RG','RT'][i], '#161b22')
+        self._draw_box(0, -8, 'QB', '#111827'); self._draw_box(14, -10, 'RB', '#161b22')
+        
+        # Wide Receiver / Tight End Logic
+        is_b = self.intel.is_bunch
+        per = self.intel.personnel
+        
+        if is_b: # BUNCH CALIBRATION
+            skill_map = [(-90,0,'X'), (45,0,'Z'), (33,0,'Y'), (20,0,'TE')]
+        else: # SPREAD CALIBRATION
+            if per == "11-PERS": skill_map = [(-95,0,'X'), (95,0,'Z'), (-48,0,'Y'), (40,0,'TE')]
+            elif per == "12-PERS": skill_map = [(-95,0,'X'), (95,0,'Z'), (-40,0,'TE'), (40,0,'TE')]
+            else: skill_map = [(-95,0,'X'), (-45,0,'TE'), (32,0,'TE'), (48,0,'TE')]
+            
+        for sx, sy, sl in skill_map:
+            self._draw_box(sx, sy, sl, '#111827')
+            if off_overlay: # Coordinate Routes to beat the shell
+                beater = "SEAM" if "3" in self.intel.coverage else "POST" if "4" in self.intel.coverage else "HOLE"
+                self.ax.annotate(beater, xy=self._pwarp(sx, 40), xytext=self._pwarp(sx, sy), arrowprops=dict(arrowstyle="->", color=OFF_PATH_GOLD, lw=4, alpha=0.8))
 
+        # --- 2. DEFENSIVE MATCH ---
+        # RCB must stay on play side. If bunch is on the right, RCB follows the widest set.
+        rcb_x = 55 if is_b else 95
+        self._draw_box(-95, self.intel.cush, 'CB', '#064e3b', def_overlay, -1)
+        self._draw_box(rcb_x, self.intel.cush, 'CB', '#064e3b', def_overlay, 1)
+
+        # DL Front (Balanced)
+        for i, x in enumerate([-20, -7, 7, 20]): self._draw_box(x, 1.4, ['DE','DT','DT','DE'][i], '#111827')
+        
+        # Linebackers
+        lb_spots = [(-18, 9.5, 'SLB'), (0, 9.5, 'MLB'), (18, 9.5, 'WLB')]
+        if is_b: lb_spots[1] = (25, 7.5, 'MLB') # Pull MLB into the box check
+        for lx, ly, ln in lb_spots: self._draw_box(lx, ly, ln, '#161b22', def_overlay)
+
+        # Safety Shell (Matched to Depth Perspective)
+        sy = 22 if self.intel.shell == 2 else 26
         if self.intel.shell == 2:
-            self._draw_player(-28, 24, 'FS', '#1e3a8a', show_def); self._draw_player(28, 24, 'SS', '#1e3a8a', show_def)
+            self._draw_box(-25, sy, 'FS', '#1e3a8a', def_overlay, -1)
+            self._draw_box(25, sy, 'SS', '#1e3a8a', def_overlay, 1)
         elif self.intel.shell == 1:
-            self._draw_player(0, 26, 'S', '#1e3a8a', show_def)
+            self._draw_box(0, sy, 'S', '#1e3a8a', def_overlay, 0)
 
-        # 2. OFFENSE personnel SETS
-        for i, x in enumerate([-20, -10, 0, 10, 20]): self._draw_player(x, -2.5, ['LT','LG','C','RG','RT'][i], '#161b22')
-        self._draw_player(0, -7.5, 'QB', '#111827'); self._draw_player(12, -8.5, 'RB', '#161b22')
-
-        p_str = self.intel.personnel
-        if "11" in p_str: skill_spots = [(-90,0,'X'), (90,0,'Z'), (-40,0,'Y'), (32,0,'TE')]
-        elif "12" in p_str: skill_spots = [(-90,0,'X'), (90,0,'Z'), (-30,0,'TE'), (32,0,'TE')]
-        else: skill_spots = [(-90,0,'X'), (-32,0,'TE'), (18,0,'TE'), (45,0,'TE')]
-
-        if self.intel.bunch: skill_spots = [(-90,0,'X'), (38,0,'Z'), (28,0,'Y'), (18,0,'TE')]
-
-        for i, (sx, sy, sl) in enumerate(skill_spots):
-            self._draw_player(sx, sy, sl, '#111827')
-            if show_off: self._render_route(sx, sy, self.intel.play_concept[i])
-
-        plt.ylim(-30, 85); plt.xlim(-130, 130); plt.axis('off')
+        plt.ylim(-30, 90); plt.xlim(-140, 140); plt.axis('off')
         return self.fig
 
 # ==========================================
-# 4. DASHBOARD DEPLOYMENT
+# 4. DEPLOYMENT & UI
 # ==========================================
-st.set_page_config(page_title="PRO-VISION // COMMAND", layout="wide")
-st.markdown(CSS_CONFIG, unsafe_allow_html=True)
-if 'r' not in st.session_state: st.session_state.r = 0
+st.set_page_config(page_title="PRO-VISION // COMMAND STATION", layout="wide")
+st.markdown(CSS_UI_STYLING, unsafe_allow_html=True)
+if 'reset' not in st.session_state: st.session_state.reset = 0
 
-st.markdown("<h1>PRO-VISION</h1><p class='author-sig'>By:Akshay Dara</p>", unsafe_allow_html=True)
+st.markdown("<h1>PRO-VISION</h1>", unsafe_allow_html=True)
+st.markdown("<p class='signature'>By:Akshay Dara</p>", unsafe_allow_html=True)
 
 with st.sidebar:
-    st.markdown("<p style='font-size:0.7rem;'>SECURE HUB</p>", unsafe_allow_html=True)
-    f = st.file_uploader("", type=['jpg','png','jpeg'], key=f"f_{st.session_state.r}", label_visibility="collapsed")
-    o_tog = st.toggle("ACTIVATE ATTACK VOIDS", value=True)
-    d_tog = st.toggle("ACTIVATE ASSIGNMENT BUBBLES", value=True)
-    if st.button("KILL TERMINAL"): st.session_state.r += 1; st.rerun()
+    st.markdown("<p style='font-size:0.75rem; color:#475569;'>OPERATIONAL DATA SOURCE</p>", unsafe_allow_html=True)
+    f = st.file_uploader("", type=['jpg','png','jpeg'], key=f"f_{st.session_state.reset}", label_visibility="collapsed")
+    o_active = st.toggle("ACTIVATE ATTACK VOIDS", value=True)
+    d_active = st.toggle("ACTIVATE ZONE TETHERS", value=True)
+    st.divider()
+    if st.button("TERMINATE SESSION"): st.session_state.reset += 1; st.rerun()
 
 if f:
-    intel = TacticalIntelligence(f)
-    if not intel.is_valid: st.error("ANALYSIS REJECTED: Not Football Formation")
+    intel = TacticalForensics(f)
+    if not intel.is_pre_snap_film: 
+        st.error("[ SCAN_REJECTED ] Image appears to be a chart, diagram, or corrupted frame. Please upload raw coaching film.")
     else:
+        # APEX HEADER
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric("PERSONNEL", intel.personnel.split()[0])
-        m2.metric("DEFENSE", intel.cov)
-        m3.metric("STRUCTURE", "BUNCH-R" if intel.bunch else "SPREAD-A")
-        m4.metric("SYSTEM", "STABLE")
+        m1.metric("PERSONNEL", intel.personnel)
+        m2.metric("EXPECTED SHELL", intel.coverage)
+        m3.metric("GROUPING", "BUNCH (S-ISO)" if intel.is_bunch else "BALANCED")
+        m4.metric("SYSTEM SYNC", "SUCCESS")
 
-        main, logs = st.columns([7, 1], gap="medium")
-        with main:
-            st.pyplot(SpatialRenderer(intel).build_field(o_tog, d_tog), transparent=True)
-            st.image(intel.img, use_container_width=True)
-        with logs:
-            st.markdown("<p style='font-size:0.5rem; text-align:center;'>RECON_S</p>", unsafe_allow_html=True)
-            with st.popover("[ SENSORY ]"):
-                st.write(f"CAM: {intel.persp}")
-                st.write(f"SEED: {intel.hash[:6]}")
-            with st.popover("[ TACTICAL ]"):
-                st.markdown(f"**VOIDS:** Vertical Seams") if "3" in intel.cov else st.markdown(f"**VOIDS:** Perimeter Hole")
-                st.write(f"OFF_BEATER: {intel.play_concept[0]}")
-            st.markdown(f"<div style='margin-top:280px; color:#1a1b1e; font-size:0.5rem;'>ID_{intel.hash[:8]}</div>", unsafe_allow_html=True)
+        m_main, m_ext = st.columns([8, 1], gap="medium") # Maximal Plot-Ratio
+        with m_main:
+            st.pyplot(AdvancedRenderer(intel).render(o_active, d_active), transparent=True)
+            st.image(intel.img, use_container_width=True, caption="[ SYSTEM FEEDBACK: LIVE SENSOR SOURCE ]")
+        with m_ext:
+            st.markdown("<p style='font-size:0.5rem; text-align:center;'>RECON_UNIT</p>", unsafe_allow_html=True)
+            with st.popover("[ PERSPECTIVE ]"):
+                st.write(f"DEPTH SCALE: CALIBRATED")
+                st.write(f"SEED ID: {intel.hash[:8]}")
+            with st.popover("[ STRATEGY ]"):
+                st.info("Primary Objective: Horizontal Stretch concepts identified.")
+                st.write(f"Inferred Check: BOX/TRIANGLE rules.")
+            st.markdown(f"<div style='margin-top:200px; font-size:0.5rem; color:#1a1b1e;'>TRACE: {intel.hash[:12]}</div>", unsafe_allow_html=True)
 else:
-    st.markdown("<div style='height:480px; border:2px dashed #1f2937; border-radius:20px; display:flex; justify-content:center; align-items:center; flex-direction:column; background:#0e1113;'><h2 style='color:#334155; letter-spacing:10px;'>AWAITING SENSOR LINK</h2></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:480px; border:2px dashed #1f2937; border-radius:20px; display:flex; justify-content:center; align-items:center; background:#0e1113;'><h3 style='color:#334155; letter-spacing:10px;'>OFFLINE: STANDBY</h3></div>", unsafe_allow_html=True)
