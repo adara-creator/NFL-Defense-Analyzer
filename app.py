@@ -336,7 +336,7 @@ def build_adaptive_alignment(vision_data, forced_scheme=None):
         })
     else:
         s1 = deep[0] if deep else {"x_yard": -6.5, "y_yard": 11.5, "depth": 11.5, "obs": "PROJECTED"}
-        s2 = deep if len(deep) > 1 else {"x_yard": 6.5, "y_yard": 11.5, "depth": 11.5, "obs": "PROJECTED"}
+        s2 = deep[-1] if len(deep) > 1 else {"x_yard": 6.5, "y_yard": 11.5, "depth": 11.5, "obs": "PROJECTED"}
         defenders.append({
             "pos": "FS", "group": "Secondary", "x_yard": s1["x_yard"], "y_yard": s1["y_yard"],
             "role": "DEEP_HALF" if "Cover 2" in scheme else "DEEP_QUARTER",
@@ -541,7 +541,7 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
         st.markdown("- **Offensive Formation:** 11 Personnel (3 WR, 1 TE, 1 RB in Shotgun).")
         st.markdown(f"- **Defensive Alignment:** Tracked {len(defenders)} defenders mapped directly from image coordinates.")
         st.markdown(f"- **Cornerback Cushions:** Measured at {data['cushion']}.")
-        st.markdown(f"- **Secondary Shell:** {shell} with deep safety apex at {defenders['align']}.")
+        st.markdown(f"- **Secondary Shell:** {shell} with deep safety apex at {defenders[0]['align']}.")
     st.markdown('</div>', unsafe_allow_html=True)
 
     # =========================================================================
