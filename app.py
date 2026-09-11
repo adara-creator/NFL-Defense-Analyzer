@@ -1,14 +1,11 @@
 """
 NFL Defensive Coverage & Formation Analyzer
 Engineering & Scouting Analytics Interface
+Native SVG vector rendering (zero external plotting dependencies required).
 """
 
 import streamlit as st
 import pandas as pd
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 import numpy as np
 from PIL import Image
 import io
@@ -104,7 +101,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- SESSION STATE ---
+# --- SESSION STATE INITIALIZATION ---
 if "panel_visibility" not in st.session_state:
     st.session_state.panel_visibility = {
         "panel_visual": False,
@@ -117,101 +114,130 @@ if "panel_visibility" not in st.session_state:
 def toggle_panel(panel_key):
     st.session_state.panel_visibility[panel_key] = not st.session_state.panel_visibility.get(panel_key, False)
 
-# --- PLAYBOOK SCHEMATIC GENERATOR ---
-def render_playbook_canvas(players, scheme_name="Cover 3 Sky", shell="1-HIGH"):
-    fig, ax = plt.subplots(figsize=(11, 6.0), facecolor='#0d1117')
-    ax.set_facecolor('#111d15')
-    ax.set_xlim(-26, 26)
-    ax.set_ylim(-7.5, 23.5)
+# --- NATIVE SVG PLAYBOOK SCHEMATIC GENERATOR ---
+def render_playbook_svg(players, scheme_name="Cover 3 Sky", shell="1-HIGH"):
+    def to_svg(x_yard, y_yard):
+        sx = (x_yard + 26.0) / 52.0 * 800.0
+        sy = (23.5 - y_yard) / 31.0 * 450.0
+        return round(sx, 1), round(sy, 1)
 
-    # 1. Field Yard Lines
+    svg = []
+    svg.append('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%" style="background:#0d1117; border-radius:4px; font-family:monospace;">')
+    svg.append('<rect x="0" y="0" width="800" height="450" fill="#111d15" stroke="#30363d" stroke-width="1"/>')
+    
+    # Yardlines every 5 yards
     for y in range(-5, 25, 5):
-        alpha = 0.95 if y == 0 else 0.25
-        color = "#e3b341" if y == 0 else "#8b949e"
-        ls = "-" if y == 0 else "--"
-        lw = 2.0 if y == 0 else 0.7
-        ax.axhline(y=y, color=color, linestyle=ls, linewidth=lw, alpha=alpha)
+        _, sy = to_svg(0, y)
+        is_los = (y == 0)
+        stroke_color = "#e3b341" if is_los else "#8b949e"
+        stroke_width = "2.5" if is_los else "0.8"
+        stroke_dash = "" if is_los else 'stroke-dasharray="4,4"'
+        opacity = "0.95" if is_los else "0.25"
+        svg.append(f'<line x1="20" y1="{sy}" x2="780" y2="{sy}" stroke="{stroke_color}" stroke-width="{stroke_width}" opacity="{opacity}" {stroke_dash}/>')
         if y > 0 and y % 10 == 0:
-            ax.text(-24.5, y + 0.3, f"+{y}y", color="#8b949e", fontsize=7.5, alpha=0.6, fontfamily="monospace")
-            ax.text(22.5, y + 0.3, f"+{y}y", color="#8b949e", fontsize=7.5, alpha=0.6, fontfamily="monospace")
+            svg.append(f'<text x="25" y="{sy - 4}" fill="#8b949e" font-size="10" opacity="0.6">+{y}y</text>')
+            svg.append(f'<text x="750" y="{sy - 4}" fill="#8b949e" font-size="10" opacity="0.6">+{y}y</text>')
 
-    # 2. Hash Marks (NFL Standard)
+    # Tackle box
+    tbx1, tby_top = to_svg(-5.5, 5.0)
+    tbx2, tby_bot = to_svg(5.5, 0.0)
+    tb_w = tbx2 - tbx1
+    tb_h = tby_bot - tby_top
+    svg.append(f'<rect x="{tbx1}" y="{tby_top}" width="{tb_w}" height="{tb_h}" fill="#d29922" fill-opacity="0.08" stroke="#d29922" stroke-width="1" stroke-dasharray="3,3"/>')
+    svg.append(f'<text x="{tbx1 + 4}" y="{tby_bot - 4}" fill="#e3b341" font-size="9" font-weight="bold">LOS</text>')
+
+    # Hash marks
     for y in range(-6, 24):
-        ax.plot([-3.1, -2.5], [y, y], color="#8b949e", lw=0.6, alpha=0.35)
-        ax.plot([2.5, 3.1], [y, y], color="#8b949e", lw=0.6, alpha=0.35)
+        hx1_a, hy = to_svg(-3.1, y)
+        hx1_b, _ = to_svg(-2.5, y)
+        hx2_a, _ = to_svg(2.5, y)
+        hx2_b, _ = to_svg(3.1, y)
+        svg.append(f'<line x1="{hx1_a}" y1="{hy}" x2="{hx1_b}" y2="{hy}" stroke="#8b949e" stroke-width="0.7" opacity="0.35"/>')
+        svg.append(f'<line x1="{hx2_a}" y1="{hy}" x2="{hx2_b}" y2="{hy}" stroke="#8b949e" stroke-width="0.7" opacity="0.35"/>')
 
-    # 3. Tackle Box & Line of Scrimmage
-    tackle_box = patches.Rectangle((-5.5, 0), 11.0, 5.0, lw=1.0, edgecolor="#d29922",
-                                   facecolor="#d29922", alpha=0.08, ls=":")
-    ax.add_patch(tackle_box)
-    ax.text(-5.3, 0.4, "LOS", color="#e3b341", fontsize=7.5, fontweight="bold", alpha=0.9, fontfamily="monospace")
+    # Coverage zones
+    if "Cover 3" in scheme_name:
+        for x1, x2, lbl in [(-25, -8.3, "1/3 DEEP (L)"), (-8.3, 8.3, "1/3 DEEP (MID)"), (8.3, 25, "1/3 DEEP (R)")]:
+            sx1, sy_top = to_svg(x1, 23.0)
+            sx2, sy_bot = to_svg(x2, 13.0)
+            svg.append(f'<rect x="{sx1}" y="{sy_top}" width="{sx2-sx1}" height="{sy_bot-sy_top}" fill="#58a6ff" fill-opacity="0.06" stroke="#58a6ff" stroke-width="0.8" stroke-dasharray="4,4"/>')
+            svg.append(f'<text x="{(sx1+sx2)/2}" y="{sy_top + 16}" fill="#79c0ff" font-size="9" text-anchor="middle" opacity="0.7">{lbl}</text>')
+    elif "Cover 2" in scheme_name or "Tampa 2" in scheme_name:
+        for x1, x2, lbl in [(-25, 0, "1/2 DEEP (L)"), (0, 25, "1/2 DEEP (R)")]:
+            sx1, sy_top = to_svg(x1, 23.0)
+            sx2, sy_bot = to_svg(x2, 12.0)
+            svg.append(f'<rect x="{sx1}" y="{sy_top}" width="{sx2-sx1}" height="{sy_bot-sy_top}" fill="#58a6ff" fill-opacity="0.07" stroke="#58a6ff" stroke-width="0.8" stroke-dasharray="4,4"/>')
+            svg.append(f'<text x="{(sx1+sx2)/2}" y="{sy_top + 16}" fill="#79c0ff" font-size="10" text-anchor="middle" opacity="0.75">{lbl}</text>')
+    elif "Cover 4" in scheme_name:
+        for x1, x2, lbl in [(-25, -12.5, "1/4 L"), (-12.5, 0, "1/4 M-L"), (0, 12.5, "1/4 M-R"), (12.5, 25, "1/4 R")]:
+            sx1, sy_top = to_svg(x1, 23.0)
+            sx2, sy_bot = to_svg(x2, 11.5)
+            svg.append(f'<rect x="{sx1}" y="{sy_top}" width="{sx2-sx1}" height="{sy_bot-sy_top}" fill="#58a6ff" fill-opacity="0.06" stroke="#58a6ff" stroke-width="0.8" stroke-dasharray="4,4"/>')
+            svg.append(f'<text x="{(sx1+sx2)/2}" y="{sy_top + 16}" fill="#79c0ff" font-size="9" text-anchor="middle" opacity="0.7">{lbl}</text>')
 
-    # 4. Offense Positions (Circles 'O')
-    offense = [p for p in players if p["side"] == "OFFENSE"]
-    for o in offense:
-        ox, oy = o["x_yard"], o["y_yard"]
-        circle = patches.Circle((ox, oy), radius=0.90, facecolor="#1f3a5f", edgecolor="#79c0ff", lw=1.2, zorder=5)
-        ax.add_patch(circle)
-        ax.text(ox, oy, o["pos"], color="#ffffff", fontsize=7, fontweight="bold", ha="center", va="center", zorder=6)
+    # Defs for Arrowhead Markers
+    svg.append("""
+    <defs>
+        <marker id="arr-rush" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#f85149" />
+        </marker>
+        <marker id="arr-deep" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#58a6ff" />
+        </marker>
+        <marker id="arr-under" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#d29922" />
+        </marker>
+        <marker id="arr-man" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#ff7b72" />
+        </marker>
+    </defs>
+    """)
 
-    # 5. Defense Alignment (Markers 'X' & Vector Tracks)
+    # Vector arrows
     defenders = [p for p in players if p["side"] == "DEFENSE"]
     for d in defenders:
-        dx, dy = d["x_yard"], d["y_yard"]
         role = d.get("role", "ZONE")
-
-        ax.scatter(dx, dy, marker="X", s=190, color="#f85149", edgecolors="#ffffff", linewidth=1.0, zorder=7)
-        ax.text(dx, dy + 1.1, d["pos"], color="#f0f6fc", fontsize=7.5, fontweight="bold", ha="center", va="bottom",
-                bbox=dict(boxstyle="square,pad=0.15", fc="#161b22", ec="#f85149", lw=0.6, alpha=0.9), zorder=8)
-
+        sx, sy = to_svg(d["x_yard"], d["y_yard"])
         if role == "RUSH":
-            ax.annotate("", xy=(dx * 0.75, -0.2), xytext=(dx, dy - 0.4),
-                        arrowprops=dict(arrowstyle="->", color="#f85149", lw=1.8, ls="-", mutation_scale=12), zorder=4)
+            tx, ty = to_svg(d["x_yard"] * 0.75, -0.2)
+            svg.append(f'<line x1="{sx}" y1="{sy + 8}" x2="{tx}" y2="{ty}" stroke="#f85149" stroke-width="2.0" marker-end="url(#arr-rush)"/>')
         elif "DEEP" in role:
-            ax.annotate("", xy=(dx, 19.5), xytext=(dx, dy + 1.2),
-                        arrowprops=dict(arrowstyle="->", color="#58a6ff", lw=1.5, ls="--", mutation_scale=12), zorder=4)
+            tx, ty = to_svg(d["x_yard"], 19.5)
+            svg.append(f'<line x1="{sx}" y1="{sy - 8}" x2="{tx}" y2="{ty}" stroke="#58a6ff" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-deep)"/>')
         elif "FLAT" in role:
-            target_x = dx + (4.0 if dx >= 0 else -4.0)
-            ax.annotate("", xy=(target_x, 3.5), xytext=(dx, dy + 0.8),
-                        arrowprops=dict(arrowstyle="->", color="#d29922", lw=1.5, ls=":", mutation_scale=11), zorder=4)
+            target_x = d["x_yard"] + (4.0 if d["x_yard"] >= 0 else -4.0)
+            tx, ty = to_svg(target_x, 3.5)
+            svg.append(f'<line x1="{sx}" y1="{sy - 4}" x2="{tx}" y2="{ty}" stroke="#d29922" stroke-width="1.8" stroke-dasharray="3,3" marker-end="url(#arr-under)"/>')
         elif "HOOK" in role or "HOLE" in role:
-            ax.annotate("", xy=(dx * 0.8, dy + 3.0), xytext=(dx, dy + 0.8),
-                        arrowprops=dict(arrowstyle="->", color="#d29922", lw=1.5, ls=":", mutation_scale=11), zorder=4)
+            tx, ty = to_svg(d["x_yard"] * 0.8, d["y_yard"] + 3.0)
+            svg.append(f'<line x1="{sx}" y1="{sy - 4}" x2="{tx}" y2="{ty}" stroke="#d29922" stroke-width="1.8" stroke-dasharray="3,3" marker-end="url(#arr-under)"/>')
         elif "MAN" in role:
-            ax.annotate("", xy=(dx, dy - 1.2), xytext=(dx, dy - 0.3),
-                        arrowprops=dict(arrowstyle="->", color="#ff7b72", lw=1.6, ls="-", mutation_scale=12), zorder=4)
+            tx, ty = to_svg(d["x_yard"], d["y_yard"] - 1.2)
+            svg.append(f'<line x1="{sx}" y1="{sy + 6}" x2="{tx}" y2="{ty}" stroke="#ff7b72" stroke-width="1.8" marker-end="url(#arr-man)"/>')
 
-    # 6. Coverage Sector Outlines
-    if "Cover 3" in scheme_name:
-        for x_left, x_right, label in [(-25, -8.3, "1/3 DEEP (L)"), (-8.3, 8.3, "1/3 DEEP (MID)"), (8.3, 25, "1/3 DEEP (R)")]:
-            ax.add_patch(patches.Rectangle((x_left, 13.0), x_right - x_left, 10.0,
-                                           facecolor="#58a6ff", alpha=0.05, edgecolor="#58a6ff", ls="--", lw=0.8))
-            ax.text((x_left + x_right) / 2, 21.8, label, color="#79c0ff", fontsize=7,
-                    ha="center", va="top", alpha=0.7, fontfamily="monospace")
-    elif "Cover 2" in scheme_name or "Tampa 2" in scheme_name:
-        for x_left, x_right, label in [(-25, 0, "1/2 DEEP (L)"), (0, 25, "1/2 DEEP (R)")]:
-            ax.add_patch(patches.Rectangle((x_left, 12.0), x_right - x_left, 11.0,
-                                           facecolor="#58a6ff", alpha=0.06, edgecolor="#58a6ff", ls="--", lw=0.8))
-            ax.text((x_left + x_right) / 2, 21.8, label, color="#79c0ff", fontsize=7.5,
-                    ha="center", va="top", alpha=0.75, fontfamily="monospace")
-    elif "Cover 4" in scheme_name:
-        for x_left, x_right, label in [(-25, -12.5, "1/4 L"), (-12.5, 0, "1/4 M-L"), (0, 12.5, "1/4 M-R"), (12.5, 25, "1/4 R")]:
-            ax.add_patch(patches.Rectangle((x_left, 11.5), x_right - x_left, 11.5,
-                                           facecolor="#58a6ff", alpha=0.05, edgecolor="#58a6ff", ls="--", lw=0.8))
-            ax.text((x_left + x_right) / 2, 21.8, label, color="#79c0ff", fontsize=7,
-                    ha="center", va="top", alpha=0.7, fontfamily="monospace")
+    # Draw Offense (Circles)
+    offense = [p for p in players if p["side"] == "OFFENSE"]
+    for o in offense:
+        sx, sy = to_svg(o["x_yard"], o["y_yard"])
+        svg.append(f'<circle cx="{sx}" cy="{sy}" r="11" fill="#1f3a5f" stroke="#79c0ff" stroke-width="1.5"/>')
+        svg.append(f'<text x="{sx}" y="{sy + 3.5}" fill="#ffffff" font-size="8.5" font-weight="bold" text-anchor="middle">{o["pos"]}</text>')
 
-    ax.set_title(f"PLAYBOOK SCHEMATIC: {scheme_name.upper()} [{shell}]", fontsize=11,
-                 color="#f0f6fc", fontweight="bold", pad=10, fontfamily="monospace")
-    ax.axis('off')
-    plt.tight_layout()
-    buf = io.BytesIO()
-    plt.savefig(buf, format="png", dpi=140, bbox_inches='tight')
-    plt.close(fig)
-    buf.seek(0)
-    return buf
+    # Draw Defense (X Markers)
+    for d in defenders:
+        sx, sy = to_svg(d["x_yard"], d["y_yard"])
+        s = 6.5
+        svg.append(f'<line x1="{sx-s}" y1="{sy-s}" x2="{sx+s}" y2="{sy+s}" stroke="#f85149" stroke-width="2.5"/>')
+        svg.append(f'<line x1="{sx-s}" y1="{sy+s}" x2="{sx+s}" y2="{sy-s}" stroke="#f85149" stroke-width="2.5"/>')
+        pos = d["pos"]
+        tag_w = max(24, len(pos) * 7 + 8)
+        svg.append(f'<rect x="{sx - tag_w/2}" y="{sy - 22}" width="{tag_w}" height="14" fill="#161b22" stroke="#f85149" stroke-width="0.8" rx="2"/>')
+        svg.append(f'<text x="{sx}" y="{sy - 11}" fill="#f0f6fc" font-size="8.5" font-weight="bold" text-anchor="middle">{pos}</text>')
 
-# --- ROSTER & ALIGNMENT DATA BUILDER ---
+    svg.append(f'<text x="400" y="24" fill="#f0f6fc" font-size="12" font-weight="bold" text-anchor="middle">PLAYBOOK SCHEMATIC: {scheme_name.upper()} [{shell}]</text>')
+    svg.append('</svg>')
+    return "".join(svg)
+
+# --- DEFENSIVE ASSIGNMENT ROSTER ---
 def build_formation_roster(scheme_name="Cover 3 Sky", shell="1-HIGH"):
     offense = [
         {"pos": "C", "x_yard": 0.0, "y_yard": -0.8, "side": "OFFENSE"},
@@ -560,8 +586,8 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
             ''', unsafe_allow_html=True)
     with col_playbook:
         st.caption("Playbook Alignment Schematic (Offense: O | Defense: X)")
-        playbook_buf = render_playbook_canvas(players, scheme, shell)
-        st.image(playbook_buf, use_container_width=True)
+        svg_code = render_playbook_svg(players, scheme, shell)
+        st.markdown(svg_code, unsafe_allow_html=True)
 
     if st.session_state.panel_visibility["panel_visual"]:
         st.markdown("---")
@@ -711,6 +737,7 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
         st.markdown("""
         - **Seam Windows:** Cover 3 structures create natural passing seams between the boundary third corner and the post safety.
         - **Four Verticals Concept:** Four immediate vertical releases stress the 3-deep zone distribution.
+        - **Three-Level Flood Concepts:** Flood route concepts overload the single sideline flat the 3-deep zone distribution.
         - **Three-Level Flood Concepts:** Flood route concepts overload the single sideline flat/third defender.
         """)
     st.markdown('</div>', unsafe_allow_html=True)
