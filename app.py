@@ -1,6 +1,8 @@
-# NFL Defensive Coverage and Formation Analyzer
+# Pro-Vision: NFL Defensive Coverage and Formation Analyzer
+# By Akshay Dara
 # Engineering and Scouting Analytics Interface
 # - Technical typography (Chakra Petch and JetBrains Mono)
+# - Clean standby base state when no photo is loaded
 # - Automatic generation upon drag-and-drop
 # - Adaptive computer-vision alignment chart extracted directly from uploaded play frames
 # - Vector coaching playbook schematics (zero external plotting dependencies)
@@ -13,11 +15,10 @@ from PIL import Image
 from scipy import ndimage
 import io
 import base64
-import os
 
 # --- SYSTEM CONFIGURATION ---
 st.set_page_config(
-    page_title="NFL Defensive Coverage and Formation Analyzer",
+    page_title="Pro-Vision - By Akshay Dara",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -29,6 +30,7 @@ CSS_RULES = (
     ".stApp { background-color: #0b0f14; color: #c9d1d9; font-family: 'Chakra Petch', sans-serif; }\n"
     ".scout-card { background: #141a21; border: 1px solid #283340; border-radius: 6px; padding: 16px 20px; margin-bottom: 16px; }\n"
     ".scout-card-title { font-size: 0.98rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #f0f6fc; margin: 0; }\n"
+    ".author-tag { font-size: 0.82rem; color: #8b949e; letter-spacing: 0.5px; margin-top: -8px; margin-bottom: 16px; font-weight: 500; }\n"
     ".film-viewport { max-height: 380px; height: 380px; background: #080c10; border: 1px solid #283340; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; }\n"
     ".film-viewport img { max-height: 380px; width: auto; max-width: 100%; object-fit: contain; }\n"
     ".tech-pill { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 0.74rem; font-weight: 600; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.3px; }\n"
@@ -41,6 +43,7 @@ CSS_RULES = (
     ".scout-table th { background-color: #0d131a; color: #8b949e; text-align: left; padding: 9px 12px; border-bottom: 2px solid #283340; font-weight: 700; text-transform: uppercase; font-size: 0.74rem; letter-spacing: 0.5px; }\n"
     ".scout-table td { padding: 8px 12px; border-bottom: 1px solid #1e2631; color: #c9d1d9; }\n"
     ".scout-table tr:hover { background-color: #1a222c; }\n"
+    ".standby-box { background: #10151c; border: 1px dashed #283340; border-radius: 6px; padding: 48px 24px; text-align: center; margin-top: 16px; }\n"
     ".mono { font-family: 'JetBrains Mono', monospace !important; }\n"
 )
 st.markdown(f"<style>{CSS_RULES}</style>", unsafe_allow_html=True)
@@ -334,7 +337,7 @@ def build_adaptive_alignment(vision_data, forced_scheme=None):
             "zone": "Man (Tight End)", "gap": "D-Gap Force", "observed": "DETECTED" if "obs" not in ss else "PROJECTED",
             "key_read": "Physical jam on TE; trail inside"
         })
-    else:
+    else:  # 2-High
         s1 = deep[0] if deep else {"x_yard": -6.5, "y_yard": 11.5, "depth": 11.5, "obs": "PROJECTED"}
         s2 = deep[-1] if len(deep) > 1 else {"x_yard": 6.5, "y_yard": 11.5, "depth": 11.5, "obs": "PROJECTED"}
         defenders.append({
@@ -465,11 +468,15 @@ with st.sidebar:
     )
     analyze_btn = st.button("Re-Analyze Formation", type="primary", use_container_width=True)
 
-# --- AUTOMATIC PROCESSING UPON DRAG AND DROP ---
-file_id = f"{uploaded_file.name}_{uploaded_file.size}" if uploaded_file is not None else None
-
-if (uploaded_file is not None and st.session_state.get("last_processed_file") != file_id) or analyze_btn or ("analysis_data" not in st.session_state):
-    if uploaded_file is not None:
+# --- BASE STATE AND FILE HANDLING ---
+if uploaded_file is None:
+    # BASE STATE: When no photo is loaded, reset all analysis state completely
+    st.session_state.pop("play_image", None)
+    st.session_state.pop("analysis_data", None)
+    st.session_state.pop("last_processed_file", None)
+else:
+    file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+    if st.session_state.get("last_processed_file") != file_id or analyze_btn or ("analysis_data" not in st.session_state):
         img = Image.open(uploaded_file)
         if img.mode != "RGB":
             img = img.convert("RGB")
@@ -479,24 +486,13 @@ if (uploaded_file is not None and st.session_state.get("last_processed_file") !=
         with st.spinner("Extracting field Line of Scrimmage, cushions, and player coordinates from photo..."):
             v_data = extract_spatial_features_from_photo(img)
             st.session_state["analysis_data"] = build_adaptive_alignment(v_data, forced_scheme=scheme_selection)
-    else:
-        import os
-        if os.path.exists("data/raw/cover3_sky.png"):
-            demo_img = Image.open("data/raw/cover3_sky.png")
-        elif os.path.exists("defense-analyzer/data/raw/cover3_sky.png"):
-            demo_img = Image.open("defense-analyzer/data/raw/cover3_sky.png")
-        else:
-            demo_img = Image.new("RGB", (800, 450), color=(18, 28, 20))
-        st.session_state["play_image"] = demo_img
-        v_data = extract_spatial_features_from_photo(demo_img)
-        default_scheme = scheme_selection if scheme_selection != "Automatic Vision Detection" else "Cover 3 Sky (1-High Zone)"
-        st.session_state["analysis_data"] = build_adaptive_alignment(v_data, forced_scheme=default_scheme)
 
-# --- APPLICATION HEADER ---
-st.title("NFL Defensive Coverage & Formation Analyzer")
-st.caption("Adaptive Computer Vision Recognition • Coaching Schematic Generator • Pro Scouting Alignment Matrix")
+# --- APPLICATION HEADER (PRO-VISION BY AKSHAY DARA) ---
+st.title("Pro-Vision")
+st.markdown("<div class='author-tag'>By Akshay Dara • NFL Defensive Coverage & Formation Analyzer</div>", unsafe_allow_html=True)
 
-if "analysis_data" in st.session_state and st.session_state["analysis_data"]["status"] == "SUCCESS":
+# --- RENDER DASHBOARD OR STANDBY BASE STATE ---
+if "analysis_data" in st.session_state and st.session_state["analysis_data"] is not None and st.session_state["analysis_data"].get("status") == "SUCCESS":
     data = st.session_state["analysis_data"]
     scheme = data["scheme"]
     shell = data["shell"]
@@ -727,4 +723,14 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
     st.markdown('</div>', unsafe_allow_html=True)
 
 else:
-    st.info("Drag and drop a play frame into the sidebar to automatically generate the defensive alignment chart and playbook schematic.")
+    # --- STANDBY BASE STATE (EVERYTHING OFF UNTIL A PHOTO IS LOADED) ---
+    st.markdown(
+        '<div class="standby-box">'
+        '<p class="scout-card-title" style="font-size:1.1rem; color:#f0f6fc;">System Standby</p>'
+        '<p style="color:#8b949e; font-size:0.88rem; margin-top:10px; max-width:540px; margin-left:auto; margin-right:auto;">'
+        'No play frame loaded. Drag and drop an All-22 or broadcast pre-snap screenshot into the sidebar '
+        'to initialize Pro-Vision optical recognition and generate the playbook alignment matrix.'
+        '</p>'
+        '</div>',
+        unsafe_allow_html=True
+    )
