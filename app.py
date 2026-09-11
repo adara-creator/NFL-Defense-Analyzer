@@ -1,11 +1,10 @@
-"""
-NFL Defensive Coverage & Formation Analyzer
-Engineering & Scouting Analytics Interface
-- Technical typography (Chakra Petch & JetBrains Mono)
-- Automatic generation upon drag-and-drop
-- Adaptive computer-vision alignment chart extracted directly from uploaded play frames
-- Vector coaching playbook schematics (zero external plotting dependencies)
-"""
+# NFL Defensive Coverage and Formation Analyzer
+# Engineering and Scouting Analytics Interface
+# - Technical typography (Chakra Petch and JetBrains Mono)
+# - Automatic generation upon drag-and-drop
+# - Adaptive computer-vision alignment chart extracted directly from uploaded play frames
+# - Vector coaching playbook schematics (zero external plotting dependencies)
+# - Zero triple-quoted string literals to prevent unterminated string syntax errors
 
 import streamlit as st
 import pandas as pd
@@ -17,112 +16,32 @@ import base64
 
 # --- SYSTEM CONFIGURATION ---
 st.set_page_config(
-    page_title="NFL Defensive Coverage & Formation Analyzer",
+    page_title="NFL Defensive Coverage and Formation Analyzer",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- TECHNICAL SCOUTING TYPOGRAPHY & DASHBOARD STYLING ---
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-
-    /* Global Typography */
-    html, body, [class*="css"] {
-        font-family: 'Chakra Petch', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-    
-    .stApp {
-        background-color: #0b0f14;
-        color: #c9d1d9;
-        font-family: 'Chakra Petch', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-
-    /* Card Panels */
-    .scout-card {
-        background: #141a21;
-        border: 1px solid #283340;
-        border-radius: 6px;
-        padding: 16px 20px;
-        margin-bottom: 16px;
-    }
-    .scout-card-title {
-        font-size: 0.98rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        color: #f0f6fc;
-        margin: 0;
-        font-family: 'Chakra Petch', sans-serif;
-    }
-
-    /* Fixed Viewport Frame for No-Scroll Photo Inspection */
-    .film-viewport {
-        max-height: 380px;
-        height: 380px;
-        background: #080c10;
-        border: 1px solid #283340;
-        border-radius: 4px;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .film-viewport img {
-        max-height: 380px;
-        width: auto;
-        max-width: 100%;
-        object-fit: contain;
-    }
-
-    /* Monospace Badges & Pills */
-    .tech-pill {
-        display: inline-block;
-        padding: 3px 8px;
-        border-radius: 3px;
-        font-size: 0.74rem;
-        font-weight: 600;
-        font-family: 'JetBrains Mono', monospace;
-        letter-spacing: 0.3px;
-    }
-    .tech-zone { background: #182e4b; color: #79c0ff; border: 1px solid #388bfd; }
-    .tech-man { background: #3d1419; color: #ff7b72; border: 1px solid #f85149; }
-    .tech-rush { background: #362106; color: #d29922; border: 1px solid #bb8009; }
-    .tech-observed { background: #12281e; color: #56d364; border: 1px solid #2ea043; }
-
-    /* Scouting Matrix Table */
-    .scout-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.82rem;
-        margin-top: 8px;
-        font-family: 'Chakra Petch', sans-serif;
-    }
-    .scout-table th {
-        background-color: #0d131a;
-        color: #8b949e;
-        text-align: left;
-        padding: 9px 12px;
-        border-bottom: 2px solid #283340;
-        font-weight: 700;
-        text-transform: uppercase;
-        font-size: 0.74rem;
-        letter-spacing: 0.5px;
-        font-family: 'Chakra Petch', sans-serif;
-    }
-    .scout-table td {
-        padding: 8px 12px;
-        border-bottom: 1px solid #1e2631;
-        color: #c9d1d9;
-    }
-    .scout-table tr:hover {
-        background-color: #1a222c;
-    }
-    .mono {
-        font-family: 'JetBrains Mono', monospace !important;
-    }
-</style>
-""", unsafe_allow_html=True)
+# --- TECHNICAL SCOUTING TYPOGRAPHY AND DASHBOARD STYLING ---
+CSS_RULES = (
+    "@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');\n"
+    "html, body, [class*='css'] { font-family: 'Chakra Petch', -apple-system, sans-serif; }\n"
+    ".stApp { background-color: #0b0f14; color: #c9d1d9; font-family: 'Chakra Petch', sans-serif; }\n"
+    ".scout-card { background: #141a21; border: 1px solid #283340; border-radius: 6px; padding: 16px 20px; margin-bottom: 16px; }\n"
+    ".scout-card-title { font-size: 0.98rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #f0f6fc; margin: 0; }\n"
+    ".film-viewport { max-height: 380px; height: 380px; background: #080c10; border: 1px solid #283340; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; }\n"
+    ".film-viewport img { max-height: 380px; width: auto; max-width: 100%; object-fit: contain; }\n"
+    ".tech-pill { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 0.74rem; font-weight: 600; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.3px; }\n"
+    ".tech-zone { background: #182e4b; color: #79c0ff; border: 1px solid #388bfd; }\n"
+    ".tech-man { background: #3d1419; color: #ff7b72; border: 1px solid #f85149; }\n"
+    ".tech-rush { background: #362106; color: #d29922; border: 1px solid #bb8009; }\n"
+    ".tech-observed { background: #12281e; color: #56d364; border: 1px solid #2ea043; }\n"
+    ".scout-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 8px; font-family: 'Chakra Petch', sans-serif; }\n"
+    ".scout-table th { background-color: #0d131a; color: #8b949e; text-align: left; padding: 9px 12px; border-bottom: 2px solid #283340; font-weight: 700; text-transform: uppercase; font-size: 0.74rem; letter-spacing: 0.5px; }\n"
+    ".scout-table td { padding: 8px 12px; border-bottom: 1px solid #1e2631; color: #c9d1d9; }\n"
+    ".scout-table tr:hover { background-color: #1a222c; }\n"
+    ".mono { font-family: 'JetBrains Mono', monospace !important; }\n"
+)
+st.markdown(f"<style>{CSS_RULES}</style>", unsafe_allow_html=True)
 
 # --- SESSION STATE INITIALIZATION ---
 if "panel_visibility" not in st.session_state:
@@ -205,22 +124,12 @@ def render_playbook_svg(players, scheme_name="Cover 3 Sky", shell="1-HIGH"):
             svg.append(f'<text x="{(sx1+sx2)/2}" y="{sy_top + 16}" fill="#79c0ff" font-size="9" text-anchor="middle" opacity="0.7">{lbl}</text>')
 
     # Arrowheads
-    svg.append("""
-    <defs>
-        <marker id="arr-rush" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-            <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#f85149" />
-        </marker>
-        <marker id="arr-deep" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-            <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#58a6ff" />
-        </marker>
-        <marker id="arr-under" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-            <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#d29922" />
-        </marker>
-        <marker id="arr-man" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-            <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#ff7b72" />
-        </marker>
-    </defs>
-    """)
+    svg.append('<defs>')
+    svg.append('<marker id="arr-rush" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#f85149" /></marker>')
+    svg.append('<marker id="arr-deep" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#58a6ff" /></marker>')
+    svg.append('<marker id="arr-under" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#d29922" /></marker>')
+    svg.append('<marker id="arr-man" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#ff7b72" /></marker>')
+    svg.append('</defs>')
 
     # Vector arrows
     defenders = [p for p in players if p["side"] == "DEFENSE"]
@@ -327,7 +236,7 @@ def extract_spatial_features_from_photo(pil_img):
         "detected_offense": detected_offense
     }
 
-# --- ADAPTIVE FORMATION & ASSIGNMENT BUILDER ---
+# --- ADAPTIVE FORMATION AND ASSIGNMENT BUILDER ---
 def build_adaptive_alignment(vision_data, forced_scheme=None):
     raw_defs = sorted(vision_data["detected_defenders"], key=lambda d: d["depth"])
     deep_safeties = [d for d in raw_defs if d["depth"] >= 8.5]
@@ -739,11 +648,7 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
             img_byte_arr = io.BytesIO()
             play_img.save(img_byte_arr, format="PNG")
             img_b64 = base64.b64encode(img_byte_arr.getvalue()).decode()
-            st.markdown(f'''
-                <div class="film-viewport">
-                    <img src="data:image/png;base64,{img_b64}" alt="Play Frame">
-                </div>
-            ''', unsafe_allow_html=True)
+            st.markdown(f'<div class="film-viewport"><img src="data:image/png;base64,{img_b64}" alt="Play Frame"></div>', unsafe_allow_html=True)
     with col_playbook:
         st.caption("Playbook Alignment Schematic (Offense: O | Defense: X)")
         svg_code = render_playbook_svg(players, scheme, shell)
@@ -752,13 +657,11 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
     if st.session_state["panel_visibility"]["panel_visual"]:
         st.markdown("---")
         st.markdown("**Field Geometry & Optical Coordinate Measurements**")
-        st.markdown(f"""
-        - **Line of Scrimmage (LOS):** Detected at 0.0 yards depth.
-        - **Offensive Formation:** 11 Personnel (3 WR, 1 TE, 1 RB in Shotgun).
-        - **Defensive Alignment:** Tracked {len(defenders)} defenders mapped directly from image coordinates.
-        - **Cornerback Cushions:** Measured at {data['cushion']}.
-        - **Secondary Shell:** {shell} with deep safety apex at {defenders[0]['align']}.
-        """)
+        st.markdown(f"- **Line of Scrimmage (LOS):** Detected at 0.0 yards depth.")
+        st.markdown(f"- **Offensive Formation:** 11 Personnel (3 WR, 1 TE, 1 RB in Shotgun).")
+        st.markdown(f"- **Defensive Alignment:** Tracked {len(defenders)} defenders mapped directly from image coordinates.")
+        st.markdown(f"- **Cornerback Cushions:** Measured at {data['cushion']}.")
+        st.markdown(f"- **Secondary Shell:** {shell} with deep safety apex at {defenders[0]['align']}.")
     st.markdown('</div>', unsafe_allow_html=True)
 
     # =========================================================================
@@ -813,49 +716,45 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
     elif group_filter == "Defensive Line (Trenches)":
         active_defenders = [d for d in defenders if d["group"] == "Defensive Line"]
 
-    table_rows = ""
+    table_rows = []
     for d in active_defenders:
         role_type = "tech-zone" if any(k in d['zone'] for k in ["1/3", "1/4", "Half", "Sky", "Cloud", "Zone"]) else ("tech-man" if "Man" in d['zone'] else "tech-rush")
         obs_badge = f'<span class="tech-pill tech-observed">{d.get("observed", "DETECTED")}</span>'
-        table_rows += f"""
-        <tr>
-            <td class="mono"><strong>{d['pos']}</strong></td>
-            <td><span style="color:#8b949e; font-size:0.75rem;">{d['group']}</span></td>
-            <td class="mono">{d['align']}</td>
-            <td><span class="mono" style="color:#e3b341;">{d['technique']}</span></td>
-            <td><span class="tech-pill {role_type}">{d['zone']}</span></td>
-            <td class="mono" style="color:#79c0ff;">{d['gap']}</td>
-            <td>{obs_badge}</td>
-            <td style="color:#8b949e; font-size:0.80rem;">{d['key_read']}</td>
-        </tr>
-        """
+        row_html = (
+            f"<tr>"
+            f"<td class='mono'><strong>{d['pos']}</strong></td>"
+            f"<td><span style='color:#8b949e; font-size:0.75rem;'>{d['group']}</span></td>"
+            f"<td class='mono'>{d['align']}</td>"
+            f"<td><span class='mono' style='color:#e3b341;'>{d['technique']}</span></td>"
+            f"<td><span class='tech-pill {role_type}'>{d['zone']}</span></td>"
+            f"<td class='mono' style='color:#79c0ff;'>{d['gap']}</td>"
+            f"<td>{obs_badge}</td>"
+            f"<td style='color:#8b949e; font-size:0.80rem;'>{d['key_read']}</td>"
+            f"</tr>"
+        )
+        table_rows.append(row_html)
 
-    st.markdown(f"""
-    <table class="scout-table">
-        <thead>
-            <tr>
-                <th>Pos</th>
-                <th>Group</th>
-                <th>Pre-Snap Alignment (Depth, Offset)</th>
-                <th>Technique / Shade</th>
-                <th>Assigned Zone / Role</th>
-                <th>Run Gap Fit</th>
-                <th>Source</th>
-                <th>Primary Read & Coverage Responsibility</th>
-            </tr>
-        </thead>
-        <tbody>{table_rows}</tbody>
-    </table>
-    """, unsafe_allow_html=True)
+    table_body = "".join(table_rows)
+    table_html = (
+        "<table class='scout-table'>"
+        "<thead><tr>"
+        "<th>Pos</th><th>Group</th><th>Pre-Snap Alignment (Depth, Offset)</th><th>Technique / Shade</th><th>Assigned Zone / Role</th><th>Run Gap Fit</th><th>Source</th><th>Primary Read & Coverage Responsibility</th>"
+        "</tr></thead>"
+        f"<tbody>{table_body}</tbody>"
+        "</table>"
+    )
+    st.markdown(table_html, unsafe_allow_html=True)
 
     if st.session_state["panel_visibility"]["panel_chart"]:
         st.markdown("---")
         st.markdown("**Playbook Rules & Assignment Principles**")
-        st.markdown("""
-        - **Divider Leverage:** Receivers aligned outside numbers are defended with inside leverage. Receivers aligned inside numbers are defended with outside leverage to protect the sideline.
-        - **Safety Drop Angles:** Safeties pedal to depth at snap to retain top-down positioning; feet remain active until the quarterback declares his throwing direction.
-        - **Underneath Wall Technique:** Apex defenders reroute slot vertical stems before expanding into intermediate passing lanes.
-        """)
+        rules = [
+            "Divider Leverage: Receivers aligned outside numbers are defended with inside leverage. Receivers aligned inside numbers are defended with outside leverage to protect the sideline.",
+            "Safety Drop Angles: Safeties pedal to depth at snap to retain top-down positioning; feet remain active until the quarterback declares his throwing direction.",
+            "Underneath Wall Technique: Apex defenders reroute slot vertical stems before expanding into intermediate passing lanes."
+        ]
+        for r in rules:
+            st.markdown(f"- {r}")
     st.markdown('</div>', unsafe_allow_html=True)
 
     # =========================================================================
@@ -887,10 +786,12 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
     if st.session_state["panel_visibility"]["panel_prob"]:
         st.markdown("---")
         st.markdown("**Classification Methodology & Softmax Calibration**")
-        st.markdown("""
-        - **Temperature Scaling:** Probabilities are calibrated using temperature-scaled softmax over spatial distance features to prevent overconfidence on disguised looks.
-        - **Split-Field Priors:** In 2x2 formations, 1-High shells weigh between Cover 3 Sky (84%) and Cover 1 Robber (11%) depending on corner cushion and safety depth.
-        """)
+        methodology = [
+            "Temperature Scaling: Probabilities are calibrated using temperature-scaled softmax over spatial distance features to prevent overconfidence on disguised looks.",
+            "Split-Field Priors: In 2x2 formations, 1-High shells weigh between Cover 3 Sky (84%) and Cover 1 Robber (11%) depending on corner cushion and safety depth."
+        ]
+        for m in methodology:
+            st.markdown(f"- {m}")
     st.markdown('</div>', unsafe_allow_html=True)
 
     # =========================================================================
@@ -912,11 +813,9 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
     if st.session_state["panel_visibility"]["panel_tells"]:
         st.markdown("---")
         st.markdown("**Quantitative Measurements**")
-        st.markdown(f"""
-        - **Box Count:** {data['box_count']} defenders aligned within the tackle box and intermediate boundary.
-        - **Corner Cushion:** {data['cushion']}.
-        - **Secondary Shell:** {shell} alignment.
-        """)
+        st.markdown(f"- **Box Count:** {data['box_count']} defenders aligned within the tackle box and intermediate boundary.")
+        st.markdown(f"- **Corner Cushion:** {data['cushion']}.")
+        st.markdown(f"- **Secondary Shell:** {shell} alignment.")
     st.markdown('</div>', unsafe_allow_html=True)
 
     # =========================================================================
@@ -937,13 +836,13 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
     if st.session_state["panel_visibility"]["panel_disguise"]:
         st.markdown("---")
         st.markdown("**Structural Vulnerabilities & Route Concepts**")
-        st.markdown("""
-        - **Seam Windows:** Cover 3 structures create natural passing seams between the boundary third corner and the post safety.
-        - **Four Verticals Concept:** Four immediate vertical releases stress the 3-deep zone distribution.
-        - **Three-Level Flood Concepts:** Flood route concepts overload the single sideline flat/third defender.
-        """)
-    st.markdown('</div>', unsafe_allow_html= the single sideline flat/third defender.
-        """)
+        vulnerabilities = [
+            "Seam Windows: Cover 3 structures create natural passing seams between the boundary third corner and the post safety.",
+            "Four Verticals Concept: Four immediate vertical releases stress the 3-deep zone distribution.",
+            "Three-Level Flood Concepts: Flood route concepts overload the single sideline flat/third defender."
+        ]
+        for v in vulnerabilities:
+            st.markdown(f"- {v}")
     st.markdown('</div>', unsafe_allow_html=True)
 
 else:
