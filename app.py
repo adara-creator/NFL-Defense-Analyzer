@@ -480,6 +480,7 @@ if (uploaded_file is not None and st.session_state.get("last_processed_file") !=
             v_data = extract_spatial_features_from_photo(img)
             st.session_state["analysis_data"] = build_adaptive_alignment(v_data, forced_scheme=scheme_selection)
     else:
+        import os
         if os.path.exists("data/raw/cover3_sky.png"):
             demo_img = Image.open("data/raw/cover3_sky.png")
         elif os.path.exists("defense-analyzer/data/raw/cover3_sky.png"):
@@ -508,7 +509,7 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
     # BOX 1: PRE-SNAP VISUAL & PLAYBOOK SCHEMATIC (SIDE-BY-SIDE NO SCROLL)
     # =========================================================================
     st.markdown('<div class="scout-card">', unsafe_allow_html=True)
-    b1_hcol, b1_bcol = st.columns()
+    b1_hcol, b1_bcol = st.columns((5, 1))
     with b1_hcol:
         st.markdown(f'<p class="scout-card-title">1. Pre-Snap Field Frame & Playbook Schematic — {scheme}</p>', unsafe_allow_html=True)
     with b1_bcol:
@@ -517,7 +518,7 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
             toggle_panel("panel_visual")
             st.rerun()
 
-    col_photo, col_playbook = st.columns()
+    col_photo, col_playbook = st.columns((1, 1))
     with col_photo:
         st.caption("Original Pre-Snap Frame (Line of Scrimmage reference at horizontal midpoint)")
         if "play_image" in st.session_state:
@@ -547,7 +548,7 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
     # BOX 2: ADAPTIVE DEFENSIVE ALIGNMENT & ZONE ASSIGNMENTS CHART
     # =========================================================================
     st.markdown('<div class="scout-card">', unsafe_allow_html=True)
-    b2_hcol, b2_bcol = st.columns()
+    b2_hcol, b2_bcol = st.columns((5, 1))
     with b2_hcol:
         st.markdown('<p class="scout-card-title">2. Defensive Alignment & Zone Assignments Chart</p>', unsafe_allow_html=True)
     with b2_bcol:
@@ -565,7 +566,7 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
     sm5.metric("CB CUSHION", data["cushion"].split(" (")[0])
 
     # Filter Controls & Export
-    filter_col1, filter_col2 = st.columns()
+    filter_col1, filter_col2 = st.columns((2, 1))
     with filter_col1:
         group_filter = st.selectbox(
             "Filter Personnel Group:",
@@ -641,7 +642,7 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
     # BOX 3: COVERAGE CLASSIFICATION & PROBABILITIES
     # =========================================================================
     st.markdown('<div class="scout-card">', unsafe_allow_html=True)
-    b3_hcol, b3_bcol = st.columns()
+    b3_hcol, b3_bcol = st.columns((5, 1))
     with b3_hcol:
         box3_title = f"3. Coverage Classification & Probabilities — {scheme} ({int(confidence*100)}% Confidence)"
         st.markdown(f'<p class="scout-card-title">{box3_title}</p>', unsafe_allow_html=True)
@@ -678,7 +679,7 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
     # BOX 4: PRE-SNAP STRUCTURAL TELLS & DIAGNOSTIC EVIDENCE
     # =========================================================================
     st.markdown('<div class="scout-card">', unsafe_allow_html=True)
-    b4_hcol, b4_bcol = st.columns()
+    b4_hcol, b4_bcol = st.columns((5, 1))
     with b4_hcol:
         st.markdown('<p class="scout-card-title">4. Structural Tells & Diagnostic Evidence</p>', unsafe_allow_html=True)
     with b4_bcol:
@@ -702,7 +703,7 @@ if "analysis_data" in st.session_state and st.session_state["analysis_data"]["st
     # BOX 5: SECONDARY ROTATION & DISGUISE WATCH
     # =========================================================================
     st.markdown('<div class="scout-card">', unsafe_allow_html=True)
-    b5_hcol, b5_bcol = st.columns()
+    b5_hcol, b5_bcol = st.columns((5, 1))
     with b5_hcol:
         st.markdown('<p class="scout-card-title">5. Secondary Rotation & Disguise Indicators</p>', unsafe_allow_html=True)
     with b5_bcol:
