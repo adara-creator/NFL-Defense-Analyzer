@@ -13,6 +13,7 @@ from PIL import Image
 from scipy import ndimage
 import io
 import base64
+import os
 
 # --- SYSTEM CONFIGURATION ---
 st.set_page_config(
@@ -252,7 +253,6 @@ def build_adaptive_alignment(vision_data, forced_scheme=None):
     raw_defs = vision_data["raw_defenders"]
     raw_off = vision_data["raw_offense"]
 
-    # Sort detected defenders into spatial tiers based on actual coordinates in photo
     deep = [d for d in raw_defs if d["depth"] >= 7.5]
     d_line = [d for d in raw_defs if d["depth"] <= 2.2 and abs(d["x_yard"]) <= 7.0]
     perim = [d for d in raw_defs if abs(d["x_yard"]) >= 6.0 and d["depth"] < 8.5]
@@ -267,7 +267,6 @@ def build_adaptive_alignment(vision_data, forced_scheme=None):
     cushions = [c["depth"] for c in perim]
     mean_cushion = float(np.mean(cushions)) if cushions else 6.5
 
-    # Determine scheme
     if forced_scheme and forced_scheme != "Automatic Vision Detection":
         scheme = forced_scheme.split(" (")[0]
     else:
@@ -287,7 +286,6 @@ def build_adaptive_alignment(vision_data, forced_scheme=None):
     else:
         shell = "2-HIGH"
 
-    # Map detected defenders directly to the 11-player roster
     defenders = []
 
     # 1. Left Cornerback (LCB)
@@ -335,7 +333,7 @@ def build_adaptive_alignment(vision_data, forced_scheme=None):
             "zone": "Man (Tight End)", "gap": "D-Gap Force", "observed": "DETECTED" if "obs" not in ss else "PROJECTED",
             "key_read": "Physical jam on TE; trail inside"
         })
-    else:  # 2-High (Cover 2, Cover 4, Cover 6)
+    else:
         s1 = deep[0] if deep else {"x_yard": -6.5, "y_yard": 11.5, "depth": 11.5, "obs": "PROJECTED"}
         s2 = deep if len(deep) > 1 else {"x_yard": 6.5, "y_yard": 11.5, "depth": 11.5, "obs": "PROJECTED"}
         defenders.append({
@@ -481,7 +479,12 @@ if (uploaded_file is not None and st.session_state.get("last_processed_file") !=
             v_data = extract_spatial_features_from_photo(img)
             st.session_state["analysis_data"] = build_adaptive_alignment(v_data, forced_scheme=scheme_selection)
     else:
-        demo_img = Image.new("RGB", (800, 450), color=(18, 28, 20))
+        if os.path.exists("data/raw/cover3_sky.png"):
+            demo_img = Image.open("data/raw/cover3_sky.png")
+        elif os.path.exists("defense-analyzer/data/raw/cover3_sky.png"):
+            demo_img = Image.open("defense-analyzer/data/raw/cover3_sky.png")
+        else:
+            demo_img = Image.new("RGB", (800, 450), color=(18, 28, 20))
         st.session_state["play_image"] = demo_img
         v_data = extract_spatial_features_from_photo(demo_img)
         default_scheme = scheme_selection if scheme_selection != "Automatic Vision Detection" else "Cover 3 Sky (1-High Zone)"
