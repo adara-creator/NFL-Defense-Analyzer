@@ -1,0 +1,7 @@
+streamlit
+pillow
+numpy
+opencv-python-headless
+scikit-learn
+streamlit-image-coordinates
+# ultralytics  # uncomment to enable the "yolo" detector backend
