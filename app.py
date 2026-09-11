@@ -182,11 +182,12 @@ def extract_spatial_features_from_photo(pil_img):
     if pil_img.mode != "RGB":
         pil_img = pil_img.convert("RGB")
     w, h = pil_img.size
-    img_np = np.array(pil_img)
 
-    r = img_np[:, :, 0].astype(float)
-    g = img_np.astype(float)
-    b = img_np[:, :, 2].astype(float)
+    # Native channel split: guarantees identical 2D arrays (H, W)
+    r_ch, g_ch, b_ch = pil_img.split()
+    r = np.array(r_ch, dtype=np.float32)
+    g = np.array(g_ch, dtype=np.float32)
+    b = np.array(b_ch, dtype=np.float32)
 
     # Segment green turf
     turf_mask = (g > r * 1.05) & (g > b * 1.02) & (g > 35) & (g < 235)
